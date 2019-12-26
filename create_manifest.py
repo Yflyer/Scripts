@@ -14,6 +14,6 @@ f2paths = os.listdir(file2)
 samples = [elem[elem.index(tag):] for elem in f1paths]
 
 manifest = open ('manifest.tsv','w')
-manifest.write('sample'+'\t'+'f1path'+'\t'+'f2path'+'\n')
+manifest.write('sample-id'+'\t'+'forward-absolute-filepath'+'\t'+'reverse-absolute-filepath'+'\n')
 for (sample,f1path,f2path) in zip(samples,f1paths,f2paths):
     manifest.write(sample+'\t'+'$PWD/'+file1+'/'+f1path+'\t'+'$PWD/'+file2+'/'+f2path+'\n')
