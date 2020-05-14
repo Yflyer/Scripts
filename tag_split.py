@@ -1,12 +1,12 @@
-#！/usr/bin/python3.6
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # use like: tag_split merge.fastq split_dir
+# Yufei, 2019/12/21
 
-import re
 import os
 import sys
 
-def mkdir(path): # waiting for be moved into base tools
+def mkdir(path):
 	folder = os.path.exists(path)
 	if not folder:
 		os.makedirs(path)
@@ -18,7 +18,7 @@ def mkdir(path): # waiting for be moved into base tools
 fdir = sys.argv[2]
 mkdir(fdir)
 
-# re match tags
+#match tags
 tag = input('Please tell me the tag of sequences: ')
 
 # I/O in low-memory consuming
@@ -29,3 +29,5 @@ with open('{}'.format(sys.argv[1]),'r') as file:
         fastq.write(line[:line.index(tag)]+'\n')
         for i in range(3): fastq.write(next(file))
 file.close()
+
+print('Completed!')

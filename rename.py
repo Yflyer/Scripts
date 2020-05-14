@@ -1,21 +1,22 @@
-#！/usr/bin/python3.6
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# use like: tag_split merge.fastq split_dir
+# Yufei,2020
+
 import os,sys
 
 #查找文件
-path=sys.argv[1]
-#os.listdir()方法，列出来所有文件
-#返回path指定的文件夹包含的文件或文件夹的名字的列表
+#the input is the relative path of directory
+path = sys.argv[1]
+old_tag = sys.argv[2]
+new_tag = sys.argv[3]
 
 files=os.listdir(path)
 
-#主逻辑
-#对于批量的操作，使用FOR循环
+#use os.path to check file
 for f in files:
-	new_name = f.replace('-','_')
-	new_name = './'+path+'/'+new_name
-	f = './'+path+'/'+f
-	#print(new_name)
-	#print(f)
-	os.rename(f,new_name)
+    if old_tag in f:
+        print("Previous name:{}".format(f))
+        old_file=os.path.join(path,f)
+        new_file=os.path.join(path,f.replace(old_tag,new_tag))
+        os.rename(old_file,new_file)
+        print("Now:{}".format(f.replace(old_tag,new_tag)))
