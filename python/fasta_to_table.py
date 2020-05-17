@@ -1,4 +1,4 @@
-#！/usr/bin/python3.6
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # transfer the fasta (mostly as repseq) to table which may be good for downstream
 import sys

@@ -1,4 +1,4 @@
-#！/usr/bin/python3.6
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # use like: tag_split merge.fastq split_dir
 
