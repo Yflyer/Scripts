@@ -1,4 +1,4 @@
-# This is a pipeline of QIIME2 command
+# This is a pipeline of QIIME2 command for THU UG.
 # Please run in activated conda QIIME2 environment
 # Yufei, 5/15/2020, zengyf@qq.com
 
@@ -78,10 +78,10 @@ qiime alignment mafft --i-sequences dada2-rep-seqs.qza --o-alignment aligned-rep
 # why mask: avoid the effect of low-complexity sequences to alignment algorithms
 qiime alignment mask --i-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza
 
-# FASTTREE to built tree
+# FASTTREE to built a tree
 qiime phylogeny fasttree --i-alignment masked-aligned-rep-seqs.qza --o-tree fasttree-tree.qza
 
-# Root the tree
+# Root the tree: make the distance comparable.
 qiime phylogeny midpoint-root --i-tree fasttree-tree.qza --o-rooted-tree rooted-fasttree-tree.qza
 
 # export the tree and aligned seqs
