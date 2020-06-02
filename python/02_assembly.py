@@ -6,20 +6,38 @@ import os
 import sys
 import psutil
 import shutil
+import argparse
 
 start = time.time()
 Pj_path = os.getcwd()
 
-out_path = os.path.join(Pj_path,'02_contigs')
+def get_parser():
+    parser = argparse.ArgumentParser(description="Demo of argparse")
+    parser.add_argument('--input', required=True,help='input')
+    parser.add_argument('--output',default='01_cleandata',help='output')
+    parser.add_argument('--memory', type=int,default=0.5,help='adapter')
+    parser.add_argument('--threads', type=int,default=4,help='threads')
+    parser.add_argument('--rmtemp',default=False,help='rmtemp')
+    parser.add_argument('--kmin',default=21,help='kmin')
+    parser.add_argument('--kmax',default=121,help='kmin')
+
+    return parser
+
+if __name__ == '__main__':
+    parser = get_parser()
+    args = parser.parse_args()
+    in_path = args.input
+    out_path = args.output
+    adapter = args.adapter
+    threads = args.threads
+    rm_temp = args.rmtemp
+    kmin = args.kmin
+    kmax = args.kmax
+'''out_path = os.path.join(Pj_path,'02_contigs')
 in_path = sys.argv[1] # 01_cleandata
 memory = sys.argv[2] # 0.5
 threads = int(sys.argv[3]) # 6
-rm_temp = sys.argv[4] # True
-
-kmin = 21
-kmax = 121
-kstep = 10
-hostrm = False
+rm_temp = sys.argv[4] # True'''
 
 # create trim path
 if not os.path.exists(out_path):
@@ -29,7 +47,7 @@ else:
     print('*** The output result will be in "{} ***"'.format(out_path))
 
 in_list = os.listdir(in_path)
-print (in_list)
+print ('***',in_list,'***')
 for sample in in_list:
     out_path_sample = os.path.join(out_path,sample)
     if os.path.exists(out_path_sample):
@@ -41,8 +59,9 @@ for sample in in_list:
     assemble='''megahit --k-min {kmin} --k-max {kmax}  --k-step {kstep} -m {memory} -t {threads} -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} --out-prefix {sample} && echo \"Assembly_Done!\"
     '''.format(kmin=kmin,kmax=kmax,kstep=kstep,memory=memory,threads=threads,clean_r1=clean_r1,clean_r2=clean_r2,out_path_sample=out_path_sample,sample=sample)
     os.system(assemble)
-    if rm_temp: shutil.rmtree('{}/intermediate_contigs'.format(out_path_sample))
 
+if rm_temp: os.system('rm -rf {}/*/intermediate_contigs'.format(out_path))
+print ('*** temp files were deleted. ***')
 os.system('n50 -b {}/*/*.contigs.fa --format tsv > 02_N50_result.tsv'.format(out_path))
 print ('*** Contigs N50 generated. ***')
 print ('*** {} is completed. ***'.format(os.path.basename(__file__)))

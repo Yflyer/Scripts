@@ -5,29 +5,35 @@
 
 import os
 import sys
+import re
 
 def mkdir(path):
-	folder = os.path.exists(path)
-	if not folder:
+	if not os.path.exists(path):
 		os.makedirs(path)
 		print ("--- Create a new directory ---")
 	else:
+		for file in os.listdir(path):
+			os.remove(os.path.join(path, file))
 		print ("--- The directory has already existed! ---")
 
 # saved path (dir)
+file = open (sys.argv[1],'r')
 fdir = sys.argv[2]
+tag = sys.argv[3]
 mkdir(fdir)
 
-#match tags
-tag = input('Please tell me the tag of sequences: ')
-
-# I/O in low-memory consuming
-with open('{}'.format(sys.argv[1]),'r') as file:
-    for line in file:
-        sample = line[line.index(tag):].strip(tag).strip()
-        fastq = open('{}/{}.fastq'.format(fdir,sample),'a')
-        fastq.write(line[:line.index(tag)]+'\n')
+for line in file:
+    match = re.search(r'{}(\w+?)\W'.format(tag),line) # match tags by re ***
+    if match:
+        #print ('found', match.group()) ## found tags
+        #print(match.groups()[0])
+        fastq = open('{}/{}.fastq'.format(fdir,match.groups()[0]),'a')
+        fastq.write(line)
         for i in range(3): fastq.write(next(file))
+    else:
+        print ('did not find tags from ',line[0:6],line[-6:len(line)])
+        break
+
 file.close()
 
 print('Completed!')

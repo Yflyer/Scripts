@@ -7,12 +7,13 @@ import os
 import sys
 
 # use listdir to get files names
-raw_path = os.path.abspath(sys.argv[1])
-tag = sys.argv[2]
-sample_len = int(sys.argv[3])
+raw_path = os.path.abspath(sys.argv[1]) # 00_rawdata/
+tag = sys.argv[2] # X
+sample_len = int(sys.argv[3]) # 6
 
-input_list = iter(os.listdir(raw_path))
-#input_list.sort()
+input_list = os.listdir(raw_path)
+input_list.sort()
+input_list = iter(input_list)
 
 try:
     manifest = open ('mapping.tsv','w')
