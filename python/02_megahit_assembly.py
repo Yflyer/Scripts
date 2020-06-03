@@ -15,24 +15,30 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Demo of argparse")
     parser.add_argument('--input', required=True,help='input')
     parser.add_argument('--output',default='01_cleandata',help='output')
-    parser.add_argument('--memory', type=int,default=0.5,help='adapter')
+    parser.add_argument('--memory', type=float,default=0.5,help='adapter')
     parser.add_argument('--threads', type=int,default=4,help='threads')
     parser.add_argument('--rmtemp',default=False,help='rmtemp')
     parser.add_argument('--kmin',default=21,help='kmin')
     parser.add_argument('--kmax',default=121,help='kmin')
-
+    parser.add_argument('--kstep',default=10,help='kstep')
+    parser.add_argument('--suffix',default='megahit',help='suffix')
     return parser
 
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     in_path = args.input
-    out_path = args.output
-    adapter = args.adapter
+    if args.suffix:
+        out_path = args.output+'_'+args.suffix
+    else:
+        out_path = args.output
+    memory = args.memory
     threads = args.threads
     rm_temp = args.rmtemp
     kmin = args.kmin
     kmax = args.kmax
+    kstep = args.kstep
+
 '''out_path = os.path.join(Pj_path,'02_contigs')
 in_path = sys.argv[1] # 01_cleandata
 memory = sys.argv[2] # 0.5
