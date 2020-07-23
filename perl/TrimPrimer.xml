@@ -1,0 +1,18 @@
+<tool id="TrimPrimer" name="Trim Primer">
+	<description>
+		Remove primers at the beginning of sequences
+	</description>
+	<command interpreter="perl">
+		TrimPrimer.pl $fastq $primer $mismatch $maxp $output $summary
+	</command>
+	<inputs>
+		<param format="fastq" name="fastq" type="data" label="Sequence file" />
+		<param name="primer" type="text" size="30" label="Primer" />
+		<param name="mismatch" type="text" size="5" label="Allowed mismatch" value="1.5"/>
+		<param name="maxp" type="text" size="5" label="Maximum starting position" value="1"/>		
+	</inputs>
+	<outputs>
+		<data format="fastq" name="output" label="TrimPrimer_${fastq.name}.fastq" />
+		<data format="txt" name="summary" label="TrimPrimer_summary.txt"/>
+	</outputs>
+</tool>

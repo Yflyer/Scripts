@@ -29,3 +29,14 @@ do
 
     cd $OLDPWD
 done
+
+for i in *sra
+do
+echo $i
+fastq-dump --split-3 $i
+done
+for i in *fastq
+do
+cp $i /mnt/
+fastq-dump --split-3 $i
+done

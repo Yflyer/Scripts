@@ -14,14 +14,14 @@ Pj_path = os.getcwd()
 def get_parser():
     parser = argparse.ArgumentParser(description="Demo of argparse")
     parser.add_argument('-i','--input',required=True,help='input')
-    parser.add_argument('-o','--output',default='02_assembly',help='output')
-    parser.add_argument('-m','--memory', type=float,default=0.5,help='adapter')
+    parser.add_argument('-o','--output',default='01_assembly',help='output')
+    parser.add_argument('-m','--memory', type=float,default=250,help='memory')
     parser.add_argument('-t','--threads', type=int,default=4,help='threads')
     parser.add_argument('--rmtemp',default=False,help='rmtemp')
     parser.add_argument('--kmin',default=21,help='kmin')
     parser.add_argument('--kmax',default=121,help='kmin')
     parser.add_argument('--kstep',default=10,help='kstep')
-    parser.add_argument('--suffix',required=False,default='megahit',help='suffix')
+    parser.add_argument('--suffix',required=False,default='spades',help='suffix')
     return parser
 
 if __name__ == '__main__':
@@ -62,13 +62,12 @@ for sample in in_list:
     clean_r1 = in_path +'/'+ sample +'/'+ sample + '_R1.Trimmed.fq.gz'
     clean_r2 = in_path +'/'+ sample +'/'+ sample + '_R2.Trimmed.fq.gz'
     print ("*** Working on sample {} ***".format(sample))
-    assemble='''megahit --k-min {kmin} --k-max {kmax}  --k-step {kstep} -m {memory} -t {threads} -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} --out-prefix {sample} && echo \"Assembly_Done!\"
-    '''.format(kmin=kmin,kmax=kmax,kstep=kstep,memory=memory,threads=threads,clean_r1=clean_r1,clean_r2=clean_r2,out_path_sample=out_path_sample,sample=sample)
+    assemble='''metaspades.py -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} -t {threads} && echo \"Assembly_Done!\"'''.format(kmin=kmin,kmax=kmax,kstep=kstep,memory=memory,threads=threads,clean_r1=clean_r1,clean_r2=clean_r2,out_path_sample=out_path_sample,sample=sample)
     os.system(assemble)
 
-if rm_temp: os.system('rm -rf {}/*/intermediate_contigs'.format(out_path))
+#if rm_temp: os.system('rm -rf {}/*/intermediate_contigs'.format(out_path))
 print ('*** temp files were deleted. ***')
-os.system('n50 -b {out_path}/*/*.contigs.fa --format tsv > {out_path}/megahit_N50_result.tsv'.format(out_path=out_path))
+os.system('n50 $(ls {out_path}/*/*.fasta) --format tsv > {out_path}/metaSpades_N50_result.tsv'.format(out_path=out_path))
 print ('*** Contigs N50 generated. ***')
 print ('*** {} is completed. ***'.format(os.path.basename(__file__)))
 

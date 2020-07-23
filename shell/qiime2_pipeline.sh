@@ -7,8 +7,15 @@ rename.py R2 _split_2. .
 rename.py R1 _split_1. .
 
 # mapping seq files
-make_mapping.py R1 R2
+make_mapping_2.py r1 r2
 
+# optional: check
+pair_check.py --input mapping.tsv
+fastq_check.py --input r1 --output check_r1
+fastq_check.py --input r2 --output check_r2
+
+# new mapping of checked files
+make_mapping_2.py check_r1 check_r2
 ##### import the data;
 # In this step, we use plugin: demux, https://docs.qiime2.org/2020.2/plugins/available/demux/
 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path mapping.tsv --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
@@ -17,7 +24,8 @@ qiime tools export  --input-path demux.qzv --output-path result/0_seq-qc
 
 # cut the primers;
 # In this step, we use plugin: cutadapt (trim-paired),https://docs.qiime2.org/2020.2/plugins/available/cutadapt/
-qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGYCAGCMGCCGCGGTAA --p-front-r GGACTACNVGGGTWTCTAAT --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
+# in this example, we used 515-806
+qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGCCAGCMGCCGCGGTAA --p-front-r GGACTACHVGGGTWTCTAAT --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
 qiime demux summarize --i-data trim-demux.qza --o-visualization trim-demux.qzv
 qiime tools export  --input-path trim-demux.qzv --output-path result/1_trim-seq-qc
 
@@ -28,6 +36,7 @@ qiime dada2 denoise-paired --i-demultiplexed-seqs trim-demux.qza --p-trunc-len-f
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2-1
 done
+
 
 # cut more to imporve percentage
 qiime dada2 denoise-paired --i-demultiplexed-seqs trim-demux.qza --p-trunc-len-f 200 --p-trunc-len-r 200 --p-trim-left-f 10 --p-trim-left-r 10 --p-n-threads 4 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza

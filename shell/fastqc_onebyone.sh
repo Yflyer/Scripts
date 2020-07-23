@@ -5,3 +5,5 @@ for i in `ls *.gz`;
 do
     fastqc ${i}
 done
+
+base=$(basename $filename _1.fastq.gz)
