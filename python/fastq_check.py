@@ -45,22 +45,26 @@ for (raw,check) in zip(input_list,output_list):
        # seq check
        seq = next(raw_f)
        num = num+1
-       if not seq.isupper(): print ('Line {} seq wrong in {}'.format(num,raw))
-       seq = seq.upper().strip()+'\n'
+       if not seq.isupper():
+           print ('Line {} seq wrong in {}'.format(num,raw))
+           seq = seq.upper().strip()+'\n'
 
        # link check
        link = next(raw_f)
        num = num+1
-       if link != '+\n': print ('Line {} link wrong in {}'.format(num,raw))
-       link = '+\n'
+       if link != '+\n':
+           print ('Line {} link wrong in {}'.format(num,raw))
+           link = '+\n'
 
 
        # qc check: lenght check
+       # the '-1' is to avoid '\n'
        qc = next(raw_f)
        num = num+1
-       if len(qc)!= len(seq):print ('Line {} qc wrong in {}'.format(num,raw))
-       if len(qc)>len(seq): qc=qc[:(len(qc)-len(seq))].strip()+'\n'
-       if len(seq)>len(qc): seq=seq[:(len(seq)-len(qc))].strip()+'\n'
+       if len(qc)!= len(seq): # this comparision included '\n'
+           print ('Line {} qc wrong in {}'.format(num,raw))
+           if len(qc)>len(seq): qc=qc[:len(seq)-1]+'\n'
+           if len(seq)>len(qc): seq=seq[:len(qc)-1]+'\n'
 
        check_f.write(tag+seq+link+qc)
        num = num+1

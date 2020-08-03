@@ -12,8 +12,6 @@ def mkdir(path):
 		os.makedirs(path)
 		print ("--- Create a new directory ---")
 	else:
-		for file in os.listdir(path):
-			os.remove(os.path.join(path, file))
 		print ("--- The directory has already existed! ---")
 
 # saved path (dir)

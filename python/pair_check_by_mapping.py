@@ -4,12 +4,11 @@
 import time
 import os
 import sys
-import psutil
 import argparse
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="Demo of argparse")
-    parser.add_argument('--input', required=True,help='input')
+    parser = argparse.ArgumentParser(description="This script can check format of pair-end data and then pair them by correct reads label. The unpaired or uncompleted data will be discarded by this script. The input of this script is the mapping information (tab-table txt).")
+    parser.add_argument('--input', required=True,help='The mapping of fastq to be paired')
     parser.add_argument('--output',default='01_cleandata',help='output')
     return parser
 
@@ -32,11 +31,14 @@ with open (map,'r') as mapping:
                     key=line[:line.index(' ')]
                 else:
                     key=line.strip()
-                tag = line
-                seq = next(f)
-                link = next(f)
-                qc = next(f)
-                dict1[key]=line+seq+link+qc
+                try:
+                    seq = next(f)
+                    link = next(f)
+                    qc = next(f)
+                    dict1[key]=line+seq+link+qc
+                except:
+                    print ('{} sample is uncompleted'.format(sample))
+                    continue
 
         dict2 = {}
         with open(backward_fq,'r') as f:
@@ -45,11 +47,14 @@ with open (map,'r') as mapping:
                     key=line[:line.index(' ')]
                 else:
                     key=line.strip()
-                tag = line
-                seq = next(f)
-                link = next(f)
-                qc = next(f)
-                dict2[key]=line+seq+link+qc
+                try:
+                    seq = next(f)
+                    link = next(f)
+                    qc = next(f)
+                    dict2[key]=line+seq+link+qc
+                except:
+                    print ('{} sample is uncompleted'.format(sample))
+                    continue
 
         if dict1.keys() != dict2.keys(): print('{} is not paired'.format(sample))
 
