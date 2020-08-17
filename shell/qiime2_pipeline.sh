@@ -15,7 +15,7 @@ fastq_check.py --input r1 --output check_r1
 fastq_check.py --input r2 --output check_r2
 
 # new mapping of checked files
-make_mapping_2.py check_r1 check_r2
+make_mapping_qiime2.py check_r1 check_r2
 ##### import the data;
 # In this step, we use plugin: demux, https://docs.qiime2.org/2020.2/plugins/available/demux/
 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path mapping.tsv --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2

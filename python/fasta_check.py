@@ -4,7 +4,6 @@
 import time
 import os
 import sys
-import psutil
 import argparse
 #import fileinput
 
@@ -21,7 +20,8 @@ if __name__ == '__main__':
     input = args.input
     output = args.output
 
-input_list = [os.path.join(input,file) for file in os.listdir(input)]
+input_list = [os.path.join(input,file) for file in os.listdir(input) if 'fasta' in file]
+print(input_list)
 output_list = [os.path.join(output,file) for file in os.listdir(input)]
 #print(input_list)
 #print(output_list)
@@ -34,23 +34,26 @@ else:
 
 for (raw,check) in zip(input_list,output_list):
    raw_f = open (raw,'r')
-   check_f = open (check,'w')
+   fasta = iter(raw_f.readlines())
+   raw_f.close()
+   raw_f = open (raw,'w')
+   #check_f = open (check,'w')
 #   enu = enumerate(raw_f, 1)
    num=1
-   for line in raw_f:
+   for line in fasta:
        # title check
        if line[0] != '>': print ('Line {} title wrong in {}'.format(num,raw))
        tag = line.strip() +'\n'
 
        # seq check
-       seq = next(raw_f)
+       seq = next(fasta)
        num = num+1
        if not seq.isupper(): print ('Line {} seq wrong in {}'.format(num,raw))
        seq = seq.upper().strip()+'\n'
 
-       check_f.write(tag+seq)
+       raw_f.write(tag+seq)
        num = num+1
 
    print('Check of {} done'.format(raw))
    raw_f.close()
-   check_f.close()
+   #check_f.close()
