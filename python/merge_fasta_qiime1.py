@@ -18,8 +18,9 @@ for sample in files:
     with open(os.path.join(path,sample),'r') as f:
         for line in f:
             key=line.strip()
-            title = key + ' ' + tag + sample[:sample.index('.')] +'\n'
+            title = '>'+sample[:sample.index('.')].replace('_','-') + '_' + key[1:] + '\n'
             seq = next(f)
+            seq = seq.upper().strip()+'\n'
             dict1[key]=title+seq
 
 with open(output,'w') as f:

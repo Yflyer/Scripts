@@ -7,8 +7,8 @@
 02_spades_assembly.py --input 01_cleandata --output 02_contigs -t 80
 
 # for test data
-0_make_mapping.pylsl 00_rawdata/ S 10
-01_trim.py --input mapping.tsv --adapter TruSeq2-PE.fa --threads 10
+0_make_mapping.py 00_rawdata/ S 10
+01_trim.py --input mapping.tsv --adapter TruSeq2-PE.fa --threads 2
 
 # for different kmer in megahit
 02_megahit_assembly.py --input 01_cleandata --output 02_contigs_k41 -m 0.4 -t 8 --rmtemp True --kmin 41

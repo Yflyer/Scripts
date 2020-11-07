@@ -10,11 +10,11 @@ import argparse
 def get_parser():
     parser = argparse.ArgumentParser(description="Demo of argparse")
     parser.add_argument('--bcsample', required=True,help='barcode')
-    parser.add_argument('--r1', required=True,help='barcode')
-    parser.add_argument('--r2', required=True,help='barcode')
+    parser.add_argument('--r1', required=True,help='R1.FASTQ')
+    parser.add_argument('--r2', required=True,help='R2.FASTQ')
     parser.add_argument('--bcseq', required=True,help='barcode')
     parser.add_argument('--lenlim', default=30,help='detect limit length')
-    parser.add_argument('--output',default='split_seq',help='output')
+    parser.add_argument('--output',default='split_seq',help='output-FOLDER')
     parser.add_argument('--tag',default='--',help='output')
     parser.add_argument('--format',default='txt',help='output')
     return parser
@@ -42,6 +42,8 @@ else:
     print('*** {} has been already existed, please deleted extra R1 or R2 to avoid overwritten ***"'.format(output))
 
 
+# create pair file of three demux seq
+#
 pair_dict = {}
 with open(r1, 'r') as R1, open(r2, 'r') as R2, open(bcseq, 'r') as bc_seq:
     for (line1,line2,line3) in zip(R1,R2,bc_seq): # zip only used in py >3.3
@@ -51,7 +53,7 @@ with open(r1, 'r') as R1, open(r2, 'r') as R2, open(bcseq, 'r') as bc_seq:
             pair.extend(list(other))
         pair_dict[line1] = pair
 
-print('reads indexed pairly')
+print('reads indexed pairly.')
 
 bc_dict = {}
 with open (bcsample,'r') as bc:

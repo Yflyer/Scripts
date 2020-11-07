@@ -2,6 +2,7 @@
 # Please run in activated conda QIIME2 environment
 # Yufei, 5/15/2020, zengyf@qq.com
 
+############## optional: sometimes you need to do following to neaten your data #################
 # adjust the name of sample
 rename.py R2 _split_2. .
 rename.py R1 _split_1. .
@@ -14,6 +15,7 @@ pair_check.py --input mapping.tsv
 fastq_check.py --input r1 --output check_r1
 fastq_check.py --input r2 --output check_r2
 
+############## qiime2 workflow ###############################################
 # new mapping of checked files
 make_mapping_qiime2.py check_r1 check_r2
 ##### import the data;
@@ -25,6 +27,7 @@ qiime tools export  --input-path demux.qzv --output-path result/0_seq-qc
 # cut the primers;
 # In this step, we use plugin: cutadapt (trim-paired),https://docs.qiime2.org/2020.2/plugins/available/cutadapt/
 # in this example, we used 515-806
+##### note: if you have trimed primers, please skip this step and change input name in the DADA2. ###########################
 qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGCCAGCMGCCGCGGTAA --p-front-r GGACTACHVGGGTWTCTAAT --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
 qiime demux summarize --i-data trim-demux.qza --o-visualization trim-demux.qzv
 qiime tools export  --input-path trim-demux.qzv --output-path result/1_trim-seq-qc
@@ -61,7 +64,7 @@ biom convert -i result/2-dada2-3/feature-table.biom -o result/2-dada2-3/feature-
 
 ##### classification
 ### if you have trained a classifier, please run：
-qiime feature-classifier classify-sklearn --i-classifier  99_16S_silva_F515_R806_classifier.qza --i-reads dada2-rep-seqs.qza --o-classification taxonomy.qza
+qiime feature-classifier classify-sklearn --p-n-jobs 4 --i-classifier  99_16S_silva_F515_R806_classifier.qza --i-reads dada2-rep-seqs.qza --o-classification taxonomy.qza
 qiime tools export  --input-path taxonomy.qza --output-path result/3_classification
 ### if not, please run following command and then come back
 

@@ -27,13 +27,13 @@ a_num=0
 b_num=0
 # the indent must be wrong
 for line in file:
-	if '.30.' not in line[10]:
-			match = re.search(r'{}(\w+?.\w+?)\W'.format(tag),line)
+	if '>' in line:
+			match = re.search(r'{}(\w+?.\w+?.\w+?)\W'.format(tag),line)
 			sample = match.groups()[0].replace('.','_')
 			id = line.strip().split(' ')[1]
 			fastq=open('{}/{}.fasta'.format(fdir,sample),'a')
-        		fastq.write('>'+id+'\n')
-        		fastq.write(next(file))
+			fastq.write('>'+id+'\n')
+			fastq.write(next(file))
 			a_num += 1
 	else:
 		b_num +=1

@@ -19,7 +19,7 @@ def get_parser():
     parser.add_argument('-t','--threads', type=int,default=4,help='threads')
     parser.add_argument('--rmtemp',default=False,help='rmtemp')
     parser.add_argument('--kmin',default=21,help='kmin')
-    parser.add_argument('--kmax',default=121,help='kmin')
+    parser.add_argument('--kmax',default=121,help='kmax')
     parser.add_argument('--kstep',default=10,help='kstep')
     parser.add_argument('--suffix',required=False,default='megahit',help='suffix')
     return parser
@@ -39,12 +39,6 @@ if __name__ == '__main__':
     kmax = args.kmax
     kstep = args.kstep
 
-'''out_path = os.path.join(Pj_path,'02_contigs')
-in_path = sys.argv[1] # 01_cleandata
-memory = sys.argv[2] # 0.5
-threads = int(sys.argv[3]) # 6
-rm_temp = sys.argv[4] # True'''
-
 # create trim path
 if not os.path.exists(out_path):
     os.mkdir(out_path)
@@ -62,11 +56,12 @@ for sample in in_list:
     clean_r1 = in_path +'/'+ sample +'/'+ sample + '_R1.Trimmed.fq.gz'
     clean_r2 = in_path +'/'+ sample +'/'+ sample + '_R2.Trimmed.fq.gz'
     print ("*** Working on sample {} ***".format(sample))
-    assemble='''megahit --k-min {kmin} --k-max {kmax}  --k-step {kstep} -m {memory} -t {threads} -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} --out-prefix {sample} && echo \"Assembly_Done!\"
+    #assemble='''megahit --k-min {kmin} --k-max {kmax}  --k-step {kstep} -m {memory} -t {threads} -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} --out-prefix {sample} && echo \"Assembly_Done!\"
+    assemble='''megahit --k-list 29,39,55,73,95,121 --min-count 2 -m {memory} -t {threads} -1 {clean_r1} -2 {clean_r2} -o {out_path_sample} --out-prefix {sample} && echo \"Assembly_Done!\"
     '''.format(kmin=kmin,kmax=kmax,kstep=kstep,memory=memory,threads=threads,clean_r1=clean_r1,clean_r2=clean_r2,out_path_sample=out_path_sample,sample=sample)
     os.system(assemble)
 
-if rm_temp: os.system('rm -rf {}/*/intermediate_contigs'.format(out_path))
+if rm_temp: os.system('rm -rf {}/*/intermediate*'.format(out_path))
 print ('*** temp files were deleted. ***')
 os.system('n50 -b {out_path}/*/*.contigs.fa --format tsv > {out_path}/megahit_N50_result.tsv'.format(out_path=out_path))
 print ('*** Contigs N50 generated. ***')

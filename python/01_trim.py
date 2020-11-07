@@ -72,14 +72,13 @@ with open (map,'r') as mapping:
     next(mapping)
     for line in mapping:
         sample,forward_fq,backward_fq = line.strip().split('\t')
-        in_path = os.path.dirname(forward_fq)
         raw_path_sample_PE = forward_fq+' '+backward_fq
         raw_path = os.path.dirname(forward_fq)
         raw_path_fastqc = os.path.join(raw_path,'fastqc')
         if not os.path.exists(raw_path_fastqc):
             os.mkdir(raw_path_fastqc)
 
-        trim_path_fastqc = os.path.join(trim_path,'fastqc')
+        trim_path_fastqc = os.path.join(raw_path,'trimmed_fastqc')
         if not os.path.exists(trim_path_fastqc):
             os.mkdir(trim_path_fastqc)
 
@@ -99,13 +98,13 @@ with open (map,'r') as mapping:
         trim_path_sample_PE = trim_r1 +' '+ outtrim_r1 +' '+ trim_r2 +' '+ outtrim_r2
         print ("*** Working on sample {} ***".format(sample))
         command = '''
-fastqc -t {threads} -o {raw_path_fastqc} {raw_path_sample_PE} -q && echo \"rawdata fastqc done!\"
+#fastqc -t {threads} -o {raw_path_fastqc} {raw_path_sample_PE} -q && echo \"rawdata fastqc done!\"
 trimmomatic PE -phred33 -threads {threads} {raw_path_sample_PE} \
     {trim_path_sample_PE} \
     ILLUMINACLIP:{adapter}:2:30:10 \
     SLIDINGWINDOW:5:20 LEADING:5 TRAILING:5 \
     MINLEN:50 && echo \"Rawdata trimmomatic done!\"
-fastqc -t {threads} -o {trim_path_fastqc} {trim_path_sample_PE} -q && echo \"cleandata fastqc done!\"
+#fastqc -t {threads} -o {trim_path_fastqc} {trim_path_sample_PE} -q && echo \"cleandata fastqc done!\"
         '''.format(threads=threads,raw_path_fastqc=raw_path_fastqc,raw_path_sample_PE=raw_path_sample_PE,trim_path_sample_PE=trim_path_sample_PE,trim_path_fastqc=trim_path_fastqc,adapter=adapter)
         os.system(command)
 
