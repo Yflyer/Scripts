@@ -22,6 +22,7 @@ rm -r 0*_b*
 # V1: K29-K39, 48 min
 
 # batch1 b3
+# megahit allocate error due to insufficient memory
 01_trim.py --input test.txt --output 01_b3 --threads 110 --rmtemp True
 02_megahit_assembly.py --input 01_b3 --output 02_b3 -m 0.9 -t 110 --rmtemp True
 #
