@@ -37,16 +37,21 @@ mkdir -p 01_kmer_trim
 cd 01_kmer_trim
 ln -s ../01_rmhost/*paired* ./
 
-for filename in *_R1.Trimmed_kneaddata_paired_1.fastq
+for filename in *_R1_kneaddata_paired_1.fastq
 do
   #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
-  base=$(basename $filename _R1.Trimmed_kneaddata_paired_1.fastq)
+  base=$(basename $filename _R1_kneaddata_paired_1.fastq)
   echo $base
 
-  interleave-reads.py ${base}_R1.Trimmed_kneaddata_paired_1.fastq ${base}_R1.Trimmed_kneaddata_paired_2.fastq | \
+  interleave-reads.py ${base}_R1_kneaddata_paired_1.fastq ${base}_R1_kneaddata_paired_2.fastq | \
   trim-low-abund.py - -V -Z 10 -C 3 -o - --gzip -M 8e9 | \
   extract-paired-reads.py --gzip -p ${base}_khmer_pe.fq.gz -s ${base}_khmer_se.fq.gz
 done
+
+find . -name "*R1*fastq" | cut -d '_' -f1 | parallel -j6 interleave-reads.py {}_R1_kneaddata_paired_1.fastq ${}_R1_kneaddata_paired_2.fastq | \
+trim-low-abund.py - -V -Z 10 -C 3 -o - --gzip -M 8e9 | \
+extract-paired-reads.py --gzip -p {}_khmer_pe.fq.gz -s {}_khmer_se.fq.gz
+
 
 ### megahit
 mkdir -p 02_contigs_megahit

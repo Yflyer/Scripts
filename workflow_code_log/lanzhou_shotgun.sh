@@ -7,20 +7,24 @@
 mkdir 01_rmhost
 cd 01_rmhost
 ln -s ../01_cleandata/H*/*Trimmed* ./
+ln -s ../raw_data_2/* ./
 
-for filename in *_R1.Trimmed.fq.gz
+for filename in *_R1.fq.gz
 do
   #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
-  base=$(basename $filename _R1.Trimmed.fq.gz)
+  base=$(basename $filename _R1.fq.gz)
   echo $base
 
-  kneaddata -i ${base}_R1.Trimmed.fq.gz -i  ${base}_R2.Trimmed.fq.gz \
-  -o . -v -t 10 --remove-intermediate-output \
-  --bypass-trim \
+  kneaddata -i ${base}_R1.fq.gz -i  ${base}_R2.fq.gz \
+  -o ${base} -v -t 10 --remove-intermediate-output \
+  --trimmomatic $P36/trimmomatic \
   --bowtie2-options '--very-sensitive --dovetail' \
   --bowtie2-options="--reorder" \
-  -db $DTB/Homo_sapiens
+  -db $DTB/Human_bowtie2
 done
+
+find . -name "*R1*" | cut -d '_' -f1 | parall|
+el -j12 kneaddata -i {}_R1.fq.gz -i {}_R2.fq.gz -o . -v -t 8 --remove-intermediate-output --trimmomatic $P36/trimmomatic -db $DTB/Human_bowtie2 --bowtie2 /vd03/home/public_conda_envs/py36/bin/
 
 rm *_R1.Trimmed.fq.gz
 ln -s H*/*fastq ./
