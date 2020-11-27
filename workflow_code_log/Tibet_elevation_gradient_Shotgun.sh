@@ -37,6 +37,16 @@ rm -r 0*_b*
 #0_make_mapping.pylsl 00_rawdata/ S 10
 01_trim.py --input mapping.tsv --adapter TruSeq2-PE.fa --threads 10
 
+ln -s ../01_cleandata/*_*/*Trimmed* ./
+ls 3* | parallel kneaddata -i {1} {2} \
+  -o . -v -t 10 --remove-intermediate-output \
+  --bypass-trim \
+  -db /vd03/home/MetaDatabase/Human_bowtie2/
+
+rm *_R1.Trimmed.fq.gz
+rm *unmatch*
+rm *bowtie2*
+
 for i in 'ls raw_data/*/*_1.fq.gz';
 do
 cp $i raw_data
