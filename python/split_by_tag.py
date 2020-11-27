@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# use like: tag_split merge.fastq split_dir
+# for data from IEG
+# use like: split_by_tag.py merge.fastq split_dir --
+# if you have a merged r1 and a merged r2, just run the script twice......
 # Yufei, 2019/12/21
 
 import os
@@ -16,21 +18,23 @@ def mkdir(path):
 
 # saved path (dir)
 file = open (sys.argv[1],'r')
-fdir = sys.argv[2]
-tag = sys.argv[3]
+fdir = sys.argv[2] # merge fastq file
+tag = sys.argv[3] # output directory
 mkdir(fdir)
 
 for line in file:
-    match = re.search(r'{}(\w+?)\W'.format(tag),line) # match tags by re ***
+    match = re.search(r'{}(\w+?)\W'.format(tag),line) # match tags by RegExp ***
     if match:
         #print ('found', match.group()) ## found tags
         #print(match.groups()[0])
         fastq = open('{}/{}.fastq'.format(fdir,match.groups()[0]),'a')
-        fastq.write(line)
-        for i in range(3): fastq.write(next(file))
-    else:
-        print ('did not find tags from ',line[0:6],line[-6:len(line)])
-        break
+        try:
+			fastq.write(line)
+			for i in range(3): fastq.write(next(file))
+        except IOError:
+			print "Error: this read can not be written. Skiped it."
+	#else:
+		#print ("--- No tag can be matched! ---")
 
 file.close()
 

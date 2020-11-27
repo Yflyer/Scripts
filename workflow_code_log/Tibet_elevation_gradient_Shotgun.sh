@@ -27,6 +27,9 @@ rm -r 0*_b*
 02_megahit_assembly.py --input 01_b3 --output 02_b3 -m 0.9 -t 110 --rmtemp True
 #
 
+# left
+01_trim.py --input left.txt --threads 120
+
 02_megahit_assembly.py --input 01_cleandata --output 02_contigs_k81 -m 0.4 -t 80 --rmtemp True --kmin 81
 02_spades_assembly.py --input 01_cleandata --output 02_contigs -t 80
 

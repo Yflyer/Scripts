@@ -4,6 +4,27 @@
 # trim and remove host
 01_trim.py --input test.txt --threads 10 --rmtemp True
 
+find . -name "*R1*" | cut -d '_' -f1 | parallel -j12 kneaddata -i {}_R1.fq.gz -i {}_R2.fq.gz \
+-o . -v -t 8 --remove-intermediate-output \
+--trimmomatic $P36/trimmomatic \
+-db $DTB/Human_bowtie2 \
+--bowtie2 /vd03/home/public_conda_envs/py36/bin/
+--bowtie2-options --dovetail\
+
+
+
+
+--trimmomatic-options "ILLUMINACLIP:TruSeq3-PE.fa::2:30:10 SLIDINGWINDOW:5:20 LEADING:5 TRAILING:5" \
+--bowtie2-options "--very-sensitive --dovetail" \
+--bowtie2-options= "--reorder" \
+--trimmomatic-options "ILLUMINACLIP:TruSeq3-PE.fa:2:40:15 SLIDINGWINDOW:4:20 MINLEN:50" \
+
+
+#--bowtie2-options '--very-sensitive --dovetail' \
+#--bowtie2-options= "--reorder" \
+
+find . -name "test*R1*" parallel cat {}
+
 mkdir 01_rmhost
 cd 01_rmhost
 ln -s ../01_cleandata/H*/*Trimmed* ./

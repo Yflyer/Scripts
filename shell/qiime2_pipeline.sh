@@ -60,7 +60,7 @@ done
 qiime feature-table summarize --i-table dada2-table.qza --o-visualization dada2-table.qzv
 
 # optional: change biom to csv
-biom convert -i result/2-dada2-3/feature-table.biom -o result/2-dada2-3/feature-table.tsv --to-tsv
+biom convert -i result/2-dada2/feature-table.biom -o result/2-dada2/feature-table.tsv --to-tsv
 
 ##### classification
 ### if you have trained a classifier, please run：
