@@ -32,9 +32,9 @@ parallel -j 14 --xapply 'trimmomatic PE -phred33 -threads 4 {1} {2} \
       SLIDINGWINDOW:5:20 LEADING:5 TRAILING:5 \
       MINLEN:50' ::: *_R1.fq ::: *_R2.fq
 
-bowtie2 -p 8 -x GRCh38_noalt_as -1 SAMPLE_R1.fastq.gz -2 SAMPLE_R2.fastq.gz --un-conc-gz
+#bowtie2 -p 8 -x GRCh38_noalt_as -1 SAMPLE_R1.fastq.gz -2 SAMPLE_R2.fastq.gz --un-conc-gz
 ## --reorder
-bowtie2 -p 8 -x $DTB/Human_bowtie2 -1 trimmed.29_R1.fq -2 trimmed.29_R2.fq -S test_mapped_and_unmapped.sam
+#bowtie2 -p 8 -x $DTB/Human_bowtie2 -1 trimmed.29_R1.fq -2 trimmed.29_R2.fq -S test_mapped_and_unmapped.sam
 
 parallel -j 3 --xapply 'kneaddata -i {1} -i {2} -o kneaddata_out -v \
  -db /mnt/f/database/Human_bowtie2 \
@@ -45,6 +45,10 @@ parallel -j 3 --xapply 'kneaddata -i {1} -i {2} -o kneaddata_out -v \
 rm *unmatch*
 rm *bowtie2*
 kneaddata_read_count_table --input . --output kneaddata_sum.txt
+
+reformat.sh in1=trimmed.29_R1_kneaddata_paired_1.fastq in2=trimmed.29_R1_kneaddata_paired_2.fastq out=test.interleaved.fq
+
+trim-low-abund.py -V -Z 10 -C 2 -M 32G -o kmer.cut.test.interleaved.fq test.interleaved.fq
 
 # adjust pair name
 for filename in *_R1_kneaddata_paired_1.fastq
