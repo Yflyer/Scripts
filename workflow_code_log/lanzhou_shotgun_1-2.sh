@@ -48,7 +48,7 @@ kneaddata_read_count_table --input . --output kneaddata_sum.txt
 
 reformat.sh in1=trimmed.29_R1_kneaddata_paired_1.fastq in2=trimmed.29_R1_kneaddata_paired_2.fastq out=test.interleaved.fq
 
-trim-low-abund.py -V -Z 10 -C 2 -M 32G -o kmer.cut.test.interleaved.fq test.interleaved.fq
+trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.test.interleaved.fq test.interleaved.fq
 
 # adjust pair name
 for filename in *_R1_kneaddata_paired_1.fastq
