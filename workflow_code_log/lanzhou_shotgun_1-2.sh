@@ -50,9 +50,11 @@ done
 ### low kmer trim
 parallel -j 3 --xapply 'interleave-reads.py {1} {2} -o merged.{1}' ::: *_paired_1.fastq ::: *_paired_2.fastq
 
+parallel -j 3 --xapply 'trim-low-abund.py -V -Z 10 -C 2 -M 32G -o kmer.cut.{1} {1}' ::: merged*
+
 ### overlap merge
 #bbmerge.sh in1=15_R1_kneaddata_paired_1.fastq in2=15_R1_kneaddata_paired_2.fastq out=test.fq outu1=unmerged1.fq outu2=unmerged2.fq
 
 ### parallel in kmer trimmed
 
-trim-low-abund.py -V -Z 10 -C 2 -M 8e9 -o kmer.cut.{1} {1}
+trim-low-abund.py -V -Z 10 -C 2 -M 32G -o kmer.cut.{1} {1}
