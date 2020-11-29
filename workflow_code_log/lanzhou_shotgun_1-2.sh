@@ -59,7 +59,7 @@ trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.te
 mkdir -p 02_megahit
 cd 02_megahit
 ln -s ../01_cleandata/kmer.cut.*pe* ./
-find . -name "kmer.cut.*pe*" | parallel -j 8 megahit --12 {} --k-list 29,39,51,67,85,107,133 -m 0.2 -t 10 --min-contig-len 500 --out-prefix {.} -o {.}
+find . -name "kmer.cut.*pe*" | parallel -j 8 megahit --12 {} --k-list 29,39,51,67,85,107,133 -m 0.2 -t 10 --min-contig-len 200 --out-prefix {.} -o {.}
 
 ln -s
 parallel -j 4 'bowtie2-build {} {.}' ::: interleaved.*
@@ -83,3 +83,9 @@ do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
 done
 #  sed -ri 's/\#0\/1//g' ${base}_R1_kneaddata_paired_1.fastq
 #  sed -ri 's/\#0\/2//g' ${base}_R1_kneaddata_paired_2.fastq
+
+for filename in */final.*
+do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
+  dir=$(dirname $filename)
+  mv ${filename} ${dir}/${dir}.contigs.fa
+done
