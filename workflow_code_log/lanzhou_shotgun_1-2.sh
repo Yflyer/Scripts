@@ -1,4 +1,5 @@
 conda install -c bioconda bbmap # bbmap is the bbtools
+conda install -c bioconda seqtk
 export PATH=$PATH:/vd03/home/yufei/scripts
 export DTB=$DTB/vd03/home/MetaDatabase
 export SGENV=$SGENV/vd03/home/public_conda_envs/py36/share
@@ -12,7 +13,7 @@ cd 01_cleandata
 
 ln -s ../00_rawdata/*fq ./
 
-parallel -j 8 --xapply 'echo {1} {2}'  ::: *_R1.fq ::: *_R2.fq
+parallel -j 3 --xapply 'echo {1/.} {2/_R/./}'  ::: yufei/*_R1.fq ::: yufei/*_R2.fq
 
 
 ############### trimmomatic and remove host reads
@@ -43,16 +44,26 @@ parallel -j 10 --xapply 'kneaddata -i {1} -i {2} -o rm_host -v \
  -t 8 --bowtie2-options "--very-sensitive --dovetail" --remove-intermediate-output' \
   ::: trimmed.*_R1.fq ::: trimmed.*_R2.fq
 
+####
 rm *unmatch*
 rm *bowtie2*
+####
 kneaddata_read_count_table --input rm_host --output kneaddata_sum.txt
 
-parallel -j 10 --xapply 'reformat.sh in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
+# interleaved-fastq
+# this process is not memory- or cpu-consuming, rum more parallel jobs as you can
+parallel --xapply 'reformat.sh verifypaired=t  in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_1.fastq ::: trimmed.*_2.fastq
 
 ### need to adjust name
+for filename in interleaved.*
+do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
+  dir=$(basename $filename)
+  echo $dir
+  #mv ${filename} ${dir}/${dir}.contigs.fa
+done
 
-parallel -j 4 --xapply 'trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.{1} {1}' ::: interleaved.*
-trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.test.interleaved.fq test.interleaved.fq
+parallel -j 2 --xapply 'trim-low-abund.py -V -Z 10 -C 3 -M 180G --quiet --summary-info tsv -o kmer.cut.{1} {1}' ::: interleaved.*
+
 
 # need adjust name of input of megahit
 
