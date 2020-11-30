@@ -29,10 +29,10 @@ for line in file:
         #print(match.groups()[0])
         fastq = open('{}/{}.fastq'.format(fdir,match.groups()[0]),'a')
         try:
-			fastq.write(line)
-			for i in range(3): fastq.write(next(file))
+            fastq.write(line)
+            for i in range(3): fastq.write(next(file))
         except IOError:
-			print "Error: this read can not be written. Skiped it."
+            print ("Error: this read can not be written. Skiped it.")
 	#else:
 		#print ("--- No tag can be matched! ---")
 

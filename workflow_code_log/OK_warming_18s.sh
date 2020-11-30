@@ -4,8 +4,8 @@
 # the rawdata from OU have some problems in suiting QIIME2. I have to write some specific scripts to clean these data. You can skip it to look at part 2 or part 3. If you have interest about these scripts, please contact me.
 ####### 1. split, clean and cut primers ###########################################
 ####### runing environment: python3
-split_by_tag.py 16S_264sample_R1.fastq 00_rawdata/r1 --
-split_by_tag.py 16S_264sample_R2.fastq 00_rawdata/r2 --
+split_by_tag.py merge_merge_18S_R1_run1_run2andrun3_and2016_WandC.fastq 00_rawdata/r1 --
+split_by_tag.py merge_merge_18S_R2_run1_run2andrun3_and2016_WandC.fastq 00_rawdata/r2 --
 split_by_tag.py merge_R1_2015and16_80sample18S_final.fastq 00_rawdata/r1 --
 split_by_tag.py merge_R2_2015and16_80sample18S_final.fastq 00_rawdata/r2 --
 
