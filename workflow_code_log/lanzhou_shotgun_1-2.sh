@@ -37,6 +37,13 @@ rm outtrimmed.*
 ## --reorder
 #bowtie2 -p 8 -x $DTB/Human_bowtie2 -1 trimmed.29_R1.fq -2 trimmed.29_R2.fq -S test_mapped_and_unmapped.sam
 
+parallel -j 10 --xapply 'reformat.sh verifypaired=t in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
+
+reformat.sh verifyinterleaved=t in1=trimmed.29_R1.fq in2=trimmed.29_R2.fq out=interleaved.trimmed.29.fastq
+
+bowtie2 -p 8 -x $DTB/GRCh38_noalt_as/GRCh38_noalt_as --interleaved interleaved.trimmed.29.fastq --very-sensitive --dovetail -S interleaved.trimmed.29.sam
+samtools view -bS interleaved.trimmed.29.sam > SAMPLE_mapped_and_unmapped.bam
+
 parallel -j 10 --xapply 'kneaddata -i {1} -i {2} -o rm_host -v \
  -db ${DTB}/Human_bowtie2 \
  --bypass-trim  \
@@ -47,19 +54,31 @@ rm *unmatch*
 rm *bowtie2*
 kneaddata_read_count_table --input rm_host --output kneaddata_sum.txt
 
-parallel -j 10 --xapply 'reformat.sh in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
 
 ### need to adjust name
 
-parallel -j 4 --xapply 'trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.{1} {1}' ::: interleaved.*
-trim-low-abund.py -V -Z 10 -C 2 -M 32G --quiet --summary-info tsv -o kmer.cut.test.interleaved.fq test.interleaved.fq
+parallel -j 10 --pipe --xapply 'trim-low-abund.py -V -Z 10 -C 3 -o - -M 32G --quiet --summary-info tsv {1} | extract-paired-reads.py -p pe.{1} -s se.{1}' ::: interleaved.*
+parallel -j 10 --xapply 'trim-low-abund.py -V -Z 10 -C 3 -o ktrim.{1} -M 32G --quiet --summary-info tsv {1}' ::: interleaved.*
+parallel -j 10 'extract-paired-reads.py -p pe.{} -s se.{}' ::: *fastq
 
+
+parallel -j 10 'load-into-counting.py -T 8 -k 31 -q --summary-info -M 32G table.{1} {1}' ::: interleaved.*
+filter-abund.py -T 8 -V -Z 10 -C -f 3 table.ct test.interleaved.fq
+
+trim-low-abund.py -V -Z 10 -C 3 -o - -M 24G --quiet --summary-info tsv interleaved.trimmed.12_R1_kneaddata_paired_1.fastq | extract-paired-reads.py -p test_khmer_pe.fq.gz -s test_khmer_se.fq.gz
 # need adjust name of input of megahit
+for filename in ktrim*_R1_kneaddata_paired_1.fastq
+do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
+  base=$(basename $filename _R1_kneaddata_paired_1.fastq)
+  base=${base//ktrim.interleaved.trimmed./}
+  mv ${filename} ${base}.fastq
+done
 
 mkdir -p 02_megahit
 cd 02_megahit
 ln -s ../01_cleandata/kmer.cut.*pe* ./
-find . -name "kmer.cut.*pe*" | parallel -j 8 megahit --12 {} --k-list 29,39,51,67,85,107,133 -m 0.2 -t 10 --min-contig-len 200 --out-prefix {.} -o {.}
+find . -name "*fastq" | parallel -j 4 echo {/.}
+find . -name "*fastq" | parallel -j 4 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 20 --min-contig-len 200 --out-prefix {/.} -o {/.}
 
 ln -s
 parallel -j 4 'bowtie2-build {} {.}' ::: interleaved.*
@@ -84,7 +103,7 @@ done
 #  sed -ri 's/\#0\/1//g' ${base}_R1_kneaddata_paired_1.fastq
 #  sed -ri 's/\#0\/2//g' ${base}_R1_kneaddata_paired_2.fastq
 
-for filename in */final.*
+for filename in ktrim*_R1_kneaddata_paired_1.fastq
 do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
   dir=$(dirname $filename)
   mv ${filename} ${dir}/${dir}.contigs.fa
