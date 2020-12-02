@@ -6,48 +6,66 @@
 # k31: 6.5hours
 # k41: 2 hours
 
-# batch files sort
-mv 01_b*/*_* 01_cleandata/
-mv 02_b*/*_* 02_contigs_k21_megahit
-rm -r 0*_b*
+export PATH=$PATH/vd03/home/yufei/scripts
+export DTB=$DTB/vd03/home/MetaDatabase
+export SGENV=$SGENV/vd03/home/public_conda_envs/py36/share
 
-# batch1 b1
-01_trim.py --input test1.txt --threads 100
-02_megahit_assembly.py --input 01_cleandata --output 02_contigs_k21 -m 0.8 -t 100 --rmtemp True --kmin 31
-# H1: k31-K41, 1 hr; k41-K51, 40 min; k111-k121, 10 min; total:12.8 hr for H0-H6
+mkdir 00_rawdata
+cd 00_rawdata
+parallel -j 20 gzip -k -d ::: *.gz
 
-# batch1 b2: from b2, we set kmer-list 29,39,55,73,95,121 and min-kmer-count 2
-01_trim.py --input test.txt --output 01_b2 --threads 120
-02_megahit_assembly.py --input 01_b2 --output 02_b2 -m 0.8 -t 120 --rmtemp True
-# V1: K29-K39, 48 min
 
-# batch1 b3
-# megahit allocate error due to insufficient memory
-01_trim.py --input test.txt --output 01_b3 --threads 110 --rmtemp True
-02_megahit_assembly.py --input 01_b3 --output 02_b3 -m 0.9 -t 110 --rmtemp True
-#
+mkdir 01_cleandata
+cd 01_cleandata
 
-# left
-01_trim.py --input left.txt --threads 120
+################### trimmomatic
+ln -s ../00_rawdata/*fq ./
+## prepare adapters at first
+parallel -j 20 --xapply 'trimmomatic PE -phred33 -threads 4 {1} {2} \
+      trimmed.{1.} outtrimmed.{1.} trimmed.{2.} outtrimmed.{2.}  \
+      ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 \
+      SLIDINGWINDOW:5:20 LEADING:5 TRAILING:5 \
+      MINLEN:50' ::: *R1.fq.gz ::: *R2.fq.gz
+############### inter files rm
+rm outtrimmed.*
+################################
 
-02_megahit_assembly.py --input 01_cleandata --output 02_contigs_k81 -m 0.4 -t 80 --rmtemp True --kmin 81
-02_spades_assembly.py --input 01_cleandata --output 02_contigs -t 80
+##############  rm host
+parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fasq ::: trimmed.*_R2.fasq
+parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
+# bump: both unmapped pair
+parallel -j 10 --xapply -k 'samtools view -b -@ 8 -f 12 -F 256 {1} > bump.{1}' ::: *.bam
+parallel -j 10 --xapply -k 'samtools sort -n -m 6G -@ 8 {1} -o sorted.{1}' ::: bump.*.bam
+parallel -j 10 --xapply -k 'samtools fastq -@ 8 {1} \
+    -1 {1.}_R1.fastq \
+    -2 {1.}_R2.fastq -n ' ::: sorted.*.bam
+############### inter files rm
+rm *bam
+rm *sam
+################################
 
-# for test data
-#0_make_mapping.pylsl 00_rawdata/ S 10
-01_trim.py --input mapping.tsv --adapter TruSeq2-PE.fa --threads 10
+################################ ktrim
+parallel -j 2 --xapply -k 'trim-low-abund.py -V -Z 10 -C 3 -o - -M 128G --quiet --summary-info tsv {1} | extract-paired-reads.py -p pe.{1} -s se.{1} ' ::: interleaved.*
+############# interfiles rm
+rm se*
+#################################
 
-ln -s ../01_cleandata/*_*/*Trimmed* ./
-ls 3* | parallel kneaddata -i {1} {2} \
-  -o . -v -t 10 --remove-intermediate-output \
-  --bypass-trim \
-  -db /vd03/home/MetaDatabase/Human_bowtie2/
 
-rm *_R1.Trimmed.fq.gz
-rm *unmatch*
-rm *bowtie2*
+"/vd02/yufei/Tibet_shotgun/raw_data/r1/9-V1_FDSW202415988-1r_1.fq.gz"
 
-for i in 'ls raw_data/*/*_1.fq.gz';
-do
-cp $i raw_data
+############## interleaved fastq and adjust name
+parallel -j 10 --xapply 'reformat.sh verifypaired=t in1={1.} in2={2.} out=interleaved.{1}.fastq' ::: trimmed.*_R1.fq ::: trimmed.*_R2.fq
+for filename in interleaved.*.fastq
+do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
+  base=${base//_R1/}
+  mv ${filename} ${base}
 done
+
+############## megahit
+mkdir -p 02_megahit
+cd 02_megahit
+find . -name "*fastq" | parallel -j 8 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.1 -t 10 --min-contig-len 200 --out-prefix {/.} -o {/.}
+############ inter files rm
+rm */inter*
+
+| cut -d '_' -f1 |

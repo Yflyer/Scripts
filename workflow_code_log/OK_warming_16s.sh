@@ -54,6 +54,8 @@ qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 220 
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2-4
 done
+biom convert -i result/2-dada2/feature-table.biom -o result/2-dada2/feature-table.tsv --to-tsv
+
 
 qiime alignment mafft --i-sequences dada2-rep-seqs.qza --o-alignment aligned-rep-seqs.qza
 qiime alignment mask --i-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza

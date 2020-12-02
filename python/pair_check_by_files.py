@@ -25,6 +25,10 @@ r2_list = [os.path.join(r2,file) for file in os.listdir(r2)]
 check_r1_list = [os.path.join(output,'r1',file) for file in os.listdir(r1)]
 check_r2_list = [os.path.join(output,'r2',file) for file in os.listdir(r2)]
 
+r1_list.sort()
+r2_list.sort()
+check_r1_list.sort()
+check_r2_list.sort()
 
 for (raw_r1,raw_r2,check_r1,check_r2) in zip(r1_list,r2_list,check_r1_list,check_r2_list):
     dict1 = {}
