@@ -61,11 +61,17 @@ do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
   mv ${filename} ${base}
 done
 
+######################### merge cleandata fastq
+ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {/}.fastq'
+#########################
+
 ############## megahit
 mkdir -p 02_megahit
 cd 02_megahit
-find . -name "*fastq" | parallel -j 8 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.1 -t 10 --min-contig-len 200 --out-prefix {/.} -o {/.}
+find . -name "*fastq" | parallel -j 3 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.1 -t 10 --min-contig-len 200 --out-prefix {/.} -o {/.}
 ############ inter files rm
 rm */inter*
 
-| cut -d '_' -f1 |
+######################### quast
+quast.py -o report *.fa
+#########################

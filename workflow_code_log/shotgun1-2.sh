@@ -24,7 +24,7 @@ rm outtrimmed.*
 ################################
 
 ##############  rm host
-parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fasq ::: trimmed.*_R2.fasq
+parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
 parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
 # bump: both unmapped pair
 parallel -j 10 --xapply -k 'samtools view -b -@ 8 -f 12 -F 256 {1} > bump.{1}' ::: *.bam
@@ -36,9 +36,25 @@ parallel -j 10 --xapply -k 'samtools fastq -@ 8 {1} \
 rm *bam
 rm *sam
 ################################
+cd ..
+
+### merge cleandata
+ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {/}.fastq'
+ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 1 'echo {}* {/}.fastq'
+
+############## megahit
+mkdir -p 02_megahit
+cd 02_megahit
+ln -s ../01_clean_data_2/sorted.*fastq ./
+parallel -j 4 'megahit -1 {1} -2 {2} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 20 --min-contig-len 200 --out-prefix {/.} -o {/.}' ::: sorted.*R1.fastq ::: sorted.*R2.fastq
+
+parallel -j 4 'megahit --12 {1} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 20 --min-contig-len 200 --out-prefix {/.} -o {/.}' ::: interleaved.*.fastq
+
+############ inter files rm
+rm */inter*
 
 ############## interleaved fastq and adjust name
-parallel -j 10 --xapply 'reformat.sh verifypaired=t in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
+parallel -j 20 --xapply 'reformat.sh verifypaired=t in1={1} in2={2} out=interleaved.{1}' ::: sorted.*_R1.fastq ::: sorted.*_R2.fastq
 for filename in interleaved.*.fastq
 do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
   base=${base//_R1/}

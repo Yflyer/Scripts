@@ -68,3 +68,5 @@ mkdir -p 02_parallel_test
 cd 02_parallel_test
 ln -s ../01_kmer_trim/H*pe* ./
 find . -name "H*pe*" | parallel  megahit --12 {} --k-list 21,29,39,55,73,95,121 -m 0.2 -t 8 -o {.}
+
+### merge_megahit
