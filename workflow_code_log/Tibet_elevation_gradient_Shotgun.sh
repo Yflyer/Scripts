@@ -65,13 +65,30 @@ done
 ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {/}.fastq'
 #########################
 
+ln -s ../01_cleandata/pe* .
+ln -s ../01_cleandata/interleave* .
+
 ############## megahit
 mkdir -p 02_megahit
 cd 02_megahit
-find . -name "*fastq" | parallel -j 3 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.1 -t 10 --min-contig-len 200 --out-prefix {/.} -o {/.}
+find . -name "*fastq" | parallel -j 6 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 4 --min-contig-len 500 --out-prefix {/.} -o {/.}
 ############ inter files rm
 rm */inter*
 
 ######################### quast
 quast.py -o report *.fa
 #########################
+
+######################### salmon mapping
+ls *fa | cut -d '.' -f3 | parallel -j 6 'echo {}'
+ls *fa | cut -d '.' -f3 | parallel -j 6 'salmon index -t interleaved.trimmed.{}.contigs.fa -i {}.sal-idx'
+
+####### salmon split
+ls *.fastq | parallel -j 6 -k split-paired-reads.py {} -1 R1.{} -2 R2.{}
+
+######## salmon quant
+salmon quant -i transcript_index --libType IU -1 $BASE$tail1 -2 $BASE$tail2 -o $BASE.quant
+parallel -j 6 --xapply 'echo {1} {2} {3}' :::: xidx.txt :::: xr1.txt :::: xr2.txt
+parallel -j 6 --xapply 'salmon quant -i {1} --libType IU -1 {2} -2 {3} -o {1.}.quant' :::: xidx.txt :::: xr1.txt :::: xr2.txt
+### :::: 代表文件
+### su root to use： strac -p pid # to trace the process whether stuck 
