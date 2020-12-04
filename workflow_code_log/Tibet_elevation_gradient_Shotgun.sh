@@ -63,7 +63,7 @@ done
 
 ######################### merge cleandata fastq
 ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {/}.fastq'
-#########################
+
 
 ln -s ../01_cleandata/pe* .
 ln -s ../01_cleandata/interleave* .
@@ -80,15 +80,31 @@ quast.py -o report *.fa
 #########################
 
 ######################### salmon mapping
-ls *fa | cut -d '.' -f3 | parallel -j 6 'echo {}'
-ls *fa | cut -d '.' -f3 | parallel -j 6 'salmon index -t interleaved.trimmed.{}.contigs.fa -i {}.sal-idx'
+######### optional
+######################### merge contigs (for contig mergging)
+ln -s  ../02_megahit/*/interleaved.trimmed.*.fa .
+ls interleaved.trimmed.*-H0*.fa | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {}.contigs.fa'
+parallel -j 6 'salmon index -t {} -i {.}.sal-idx' ::: *fa
+parallel -j 6 --xapply 'salmon quant -i {1} --libType IU -1 {2} -2 {3} -o {1.}.quant' :::: idx.txt :::: r1.txt :::: r2.txt
+##########################
+
+ln -s ../01 /*/*.fa
+ls *fa | cut -d '.' -f3 | parallel -j 3 'echo {}'
+ls *fa | cut -d '.' -f3 | parallel -j 3 'salmon index -t interleaved.trimmed.{}.contigs.fa -i {}.sal-idx'
 
 ####### salmon split
-ls *.fastq | parallel -j 6 -k split-paired-reads.py {} -1 R1.{} -2 R2.{}
+ls *.fastq | parallel -j 18 -k split-paired-reads.py {} -1 R1.{} -2 R2.{}
 
 ######## salmon quant
-salmon quant -i transcript_index --libType IU -1 $BASE$tail1 -2 $BASE$tail2 -o $BASE.quant
-parallel -j 6 --xapply 'echo {1} {2} {3}' :::: xidx.txt :::: xr1.txt :::: xr2.txt
-parallel -j 6 --xapply 'salmon quant -i {1} --libType IU -1 {2} -2 {3} -o {1.}.quant' :::: xidx.txt :::: xr1.txt :::: xr2.txt
+ls -d *idx > idx.txt
+ls -d R1*.fastq>r1.txt
+ls -d R2*.fastq>r2.txt
+parallel -j 3 --xapply 'echo {1} {2} {3}' :::: idx.txt :::: r1.txt :::: r2.txt
+parallel -j 3 --xapply 'salmon quant -i {1} --libType IU -1 {2} -2 {3} -o {1.}.quant' :::: idx.txt :::: r1.txt :::: r2.txt
 ### :::: 代表文件
-### su root to use： strac -p pid # to trace the process whether stuck 
+### su root to use： strac -p pid # to trace the process whether stuck
+
+##### 04 annotation
+parallel -j 8 'prokka --addgenes --metagenome --addmrna --outdir {.} --prefix {.} --mincontiglen 500 {}' ::: *.fa
+
+### Prokka needs blastp 2.2 or higher. Please upgrade and try again.
