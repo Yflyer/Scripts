@@ -75,6 +75,9 @@ find . -name "*fastq" | parallel -j 6 megahit --12 {} --min-count 2 --k-list 29,
 ############ inter files rm
 rm */inter*
 
+############## spades
+parallel -j 2 'spades.py --meta --memory 160 --threads 20 --12 {} -o {.}' ::: *.fastq
+
 ######################### quast
 quast.py -o report *.fa
 #########################
