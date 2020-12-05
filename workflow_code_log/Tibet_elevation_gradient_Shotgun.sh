@@ -104,7 +104,33 @@ parallel -j 3 --xapply 'salmon quant -i {1} --libType IU -1 {2} -2 {3} -o {1.}.q
 ### :::: 代表文件
 ### su root to use： strac -p pid # to trace the process whether stuck
 
+######## run_MaxBin
+### abund list generation
+ls *fa | cut -d '.' -f3 | parallel -j 3 "awk '/k133/{print $1,$4}' ../03_megahit_mapping/{}.quant/quant.sf > abund.{}.tsv"
+######### for loop
+for i in *fa
+do
+  base=$(basename $i .contigs.fa)
+  base=${base/interleaved.trimmed.}
+  awk '/k133/{print $1,$4}' ../03_merge_megahit_mapping/${base}.quant/quant.sf > ${base}.abund.tsv
+done
+
+###################### run_MaxBin
+####### mkdir work dir
+ls *.tsv | cut -d '.' -f1 | parallel mkdir {}
+############ parallel
+ls *.tsv | cut -d '.' -f1 | parallel -j 6 'echo interleaved.trimmed.{}.contigs.fa {}/{} {}.abund.tsv'
+ls *.tsv | cut -d '.' -f1 | parallel -j 6 'run_MaxBin.pl -thread 30 -contig interleaved.trimmed.{}.contigs.fa -out {} -abund {}.abund.tsv'
+####### for loop kind
+for i in *.tsv
+do
+  run_MaxBin.pl -thread 30 -contig interleaved.trimmed.${i/.abund.tsv/}.contigs.fa -out ${i/.abund.tsv/}/${i/.abund.tsv/} -abund ${i/.abund.tsv/}.abund.tsv
+done
+
+
+
+
 ##### 04 annotation
-parallel -j 8 'prokka --addgenes --metagenome --addmrna --outdir {.} --prefix {.} --mincontiglen 500 {}' ::: *.fa
+parallel -j 9 'prokka --addgenes --metagenome --outdir {.} --prefix {.} --mincontiglen 500 {}' ::: *.fa
 
 ### Prokka needs blastp 2.2 or higher. Please upgrade and try again.
