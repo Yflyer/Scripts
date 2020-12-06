@@ -56,11 +56,12 @@ qiime tools export  --input-path demux.qzv --output-path result/1_seq-qc
 ### the setting of parameters are selected by the result of part 3 (see the files of 'parameters_selection' in result foilder).
 # To decrease chimeric rate, chemeric parent-over-abundance was set.
 
-qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 225 --p-trunc-len-r 163 --p-min-fold-parent-over-abundance 8 --p-n-threads 8 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
+qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 250 --p-trunc-len-r 234 --p-min-fold-parent-over-abundance 8 --p-n-threads 8 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
 
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2
 done
+biom convert -i result/2-dada2/feature-table.biom -o result/2-dada2/feature-table.tsv --to-tsv
 
 #### TREE
 qiime alignment mafft --i-sequences dada2-rep-seqs.qza --o-alignment aligned-rep-seqs.qza
@@ -69,10 +70,13 @@ qiime phylogeny fasttree --i-alignment masked-aligned-rep-seqs.qza --o-tree fast
 qiime phylogeny midpoint-root --i-tree fasttree-tree.qza --o-rooted-tree rooted-fasttree-tree.qza
 
 #### TAXA
-qiime feature-classifier classify-sklearn --i-classifier  $DTB/silva_16s_classifier/99_16S_silva_F515_R806_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification taxonomy.qza
+qiime feature-classifier classify-sklearn --i-classifier  $DTB/pr2_protists/trim-pr2-18S_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification taxonomy.qza
 qiime tools export  --input-path taxonomy.qza --output-path result/3_classification
 qiime tools export --input-path rooted-fasttree-tree.qza --output-path result/4_tree/fasttree
 qiime tools export --input-path aligned-rep-seqs.qza --output-path result/4_tree
+
+qiime feature-classifier classify-sklearn --i-classifier  $DTB/silva_18s_classifier/trim_99_18S_silva_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification silva.taxonomy.qza
+qiime tools export  --input-path silva.taxonomy.qza --output-path result/3_classification
 
 ####### 3. Other information #################################################################
 # Multiply tests are aranged to get potentially best parameters in a 11-samples pre-analysis.
@@ -84,7 +88,6 @@ qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 224 
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2-1
 done
-biom convert -i result/2-dada2/feature-table.biom -o result/2-dada2/feature-table.tsv --to-tsv
 
 # turncate more at left end to get better quality at reverse sequence.
 # the merge percentages of 15-16 year sample are better.
