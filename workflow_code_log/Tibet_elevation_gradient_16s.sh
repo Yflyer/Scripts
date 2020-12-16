@@ -29,7 +29,3 @@ qiime phylogeny fasttree --i-alignment masked-aligned-rep-seqs.qza --o-tree fast
 qiime phylogeny midpoint-root --i-tree fasttree-tree.qza --o-rooted-tree rooted-fasttree-tree.qza
 qiime tools export --input-path rooted-fasttree-tree.qza --output-path result/4_tree/fasttree
 qiime tools export --input-path aligned-rep-seqs.qza --output-path result/4_tree
-
-
-# dada2 no-turncate
-qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 0 --p-trunc-len-r 0 --p-min-fold-parent-over-abundance 8 --p-n-threads 10 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza

@@ -4,10 +4,10 @@
 # the rawdata from OU have some problems in suiting QIIME2. I have to write some specific scripts to clean these data. You can skip it to look at part 2 or part 3. If you have interest about these scripts, please contact me.
 ####### 1. split, clean and cut primers ###########################################
 ####### runing environment: python3
-split_by_tag.py merge_merge_18S_R1_run1_run2andrun3_and2016_WandC.fastq 00_rawdata/r1 --
-split_by_tag.py merge_merge_18S_R2_run1_run2andrun3_and2016_WandC.fastq 00_rawdata/r2 --
-split_by_tag.py merge_R1_2015and16_80sample18S_final.fastq 00_rawdata/r1 --
-split_by_tag.py merge_R2_2015and16_80sample18S_final.fastq 00_rawdata/r2 --
+split_by_tag.py merge_R1_2015and16_80sampleITS_final.fastq 00_rawdata/r1 --
+split_by_tag.py merge_R2_2015and16_80sampleITS_final.fastq 00_rawdata/r2 --
+split_by_tag.py merge_ITS_264sample_15and16WandC_final_R1.fastq 00_rawdata/r1 --
+split_by_tag.py merge_ITS_264sample_15and16WandC_final_R2.fastq 00_rawdata/r2 --
 
 mkdir -p 01_cleandata
 mkdir -p 01_cleandata/r1
@@ -21,16 +21,16 @@ pair_check_by_files.py --r1 00_rawdata/r1 --r2 00_rawdata/r2 --output 01_cleanda
 # X15_19N.fastq
 
 cd 01_cleandata/r1
-for i in `ls *.fastq`;
+for i in *.fastq;
 do
-    cutadapt -g CCAGCASCYGCGGTAATTCC -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r1_report_txt
+    cutadapt -g GTGARTCATCGARTCTTTG -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r1_report_txt
     rm ${i}
 done
 
 cd ../r2
-for i in `ls *.fastq`;
+for i in *.fastq;
 do
-    cutadapt -g ACTTTCGTTCTTGATYRA -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r2_report_txt
+    cutadapt -g TCCTCCGCTTATTGATATGC -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r2_report_txt
     #rm ${i}
 done
 
@@ -56,7 +56,7 @@ qiime tools export  --input-path demux.qzv --output-path result/1_seq-qc
 ### the setting of parameters are selected by the result of part 3 (see the files of 'parameters_selection' in result foilder).
 # To decrease chimeric rate, chemeric parent-over-abundance was set.
 
-qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 250 --p-trunc-len-r 234 --p-min-fold-parent-over-abundance 8 --p-n-threads 8 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
+qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trunc-len-f 210 --p-trunc-len-r 180 --p-trim-left-f 5 --p-trim-left-r 5 --p-min-fold-parent-over-abundance 8 --p-n-threads 8 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
 
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2
@@ -70,7 +70,7 @@ qiime phylogeny fasttree --i-alignment masked-aligned-rep-seqs.qza --o-tree fast
 qiime phylogeny midpoint-root --i-tree fasttree-tree.qza --o-rooted-tree rooted-fasttree-tree.qza
 
 #### TAXA
-qiime feature-classifier classify-sklearn --i-classifier  $DTB/pr2_protists/trim-pr2-18S_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification taxonomy.qza
+qiime feature-classifier classify-sklearn --p-n-jobs 10 --p-pre-dispatch 1 --i-classifier  $DTB/unite_ITS_classifier/unite-ver8-99_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification taxonomy.qza
 qiime tools export  --input-path taxonomy.qza --output-path result/3_classification
 qiime tools export --input-path rooted-fasttree-tree.qza --output-path result/4_tree/fasttree
 qiime tools export --input-path aligned-rep-seqs.qza --output-path result/4_tree
