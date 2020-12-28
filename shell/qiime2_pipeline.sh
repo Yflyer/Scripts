@@ -2,6 +2,12 @@
 # Please run in activated conda QIIME2 environment
 # Yufei, 5/15/2020, zengyf@qq.com
 
+conda install -c bioconda sabre
+###
+############## demultiplexing #################
+awk -v OFS="\t" '{print $2, $1"_R1.fq", $1"_R2.fq"} ' barcode_mapping.txt > sabre_barcode_mapping.txt
+Split_libraries_fastq.pl --f1 Hawaii_ITS_S0_L001_R1_001.fastq --f2 Hawaii_ITS_S0_L001_R2_001.fastq --map sample.tab --index Hawaii_ITS_S0_L001_I1_001.fastq --o1 Hawaii_ITS_R1.fq --o2 Hawaii_ITS_R2.fq
+
 ############## optional: sometimes you need to do following to neaten your data #################
 # adjust the name of sample
 rename.py R2 _split_2. .

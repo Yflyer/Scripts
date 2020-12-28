@@ -2,6 +2,52 @@
 ###
 mapping_by_sra.py --sra SraRunTable.txt --input sra --format txt --type BAC
 
+
+########
+####### ITS
+Split_libraries_fastq.pl --f1 Hawaii_ITS_S0_L001_R1_001.fastq --f2 Hawaii_ITS_S0_L001_R2_001.fastq --map sample.tab --index Hawaii_ITS_S0_L001_I1_001.fastq --o1 Hawaii_ITS_R1.fq --o2 Hawaii_ITS_R2.fq
+
+split_by_tag.py Hawaii_ITS_R1.fq 00_rawdata/r1 --
+split_by_tag.py Hawaii_ITS_R2.fq 00_rawdata/r2 --
+
+mkdir -p 01_cleandata
+mkdir -p 01_cleandata/r1
+mkdir -p 01_cleandata/r2
+pair_check_by_files.py --r1 00_rawdata/r1 --r2 00_rawdata/r2 --output 01_cleandata
+
+cd 01_cleandata/r1
+for i in *.fastq;
+do
+    cutadapt -g GTGARTCATCGARTCTTTG -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r1_report_txt
+    rm ${i}
+done
+
+cd ../r2
+for i in *.fastq;
+do
+    cutadapt -g TCCTCCGCTTATTGATATGC -o ptrim_${i} -m 150 -M 350 --trimmed-only --max-n 0 -j 8 ${i} > ../../ptrim_r2_report_txt
+    rm ${i}
+done
+
+cd ../..
+
+# check again
+mkdir -p 02_ptrim
+mkdir -p 02_ptrim/r1
+mkdir -p 02_ptrim/r2
+pair_check_by_files.py --r1 01_cleandata/r1 --r2 01_cleandata/r2 --output 02_ptrim
+
+#### generate mapping for importing
+make_mapping_qiime2.py 02_ptrim/r1 02_ptrim/r2
+
+####### 2. QIIME2 workflow #################################################################
+####### 2.1 import
+qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path mapping.tsv --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
+qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
+# the quality control (qc) result is imported to the result folder.
+qiime tools export  --input-path demux.qzv --output-path result/1_seq-qc
+
+
 ##################16s
 ### merge
 merge_fasta_qiime1.py split_all/ -- Hawaii_16s.fasta
