@@ -28,13 +28,13 @@ qiime tools export  --input-path demux.qzv --output-path result/0_seq-qc
 # In this step, we use plugin: cutadapt (trim-paired),https://docs.qiime2.org/2020.2/plugins/available/cutadapt/
 # in this example, we used 515-806
 ##### note: if you have trimed primers, please skip this step and change input name in the DADA2. ###########################
-qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGCCAGCMGCCGCGGTAA --p-front-r GGACTACHVGGGTWTCTAAT --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
+qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGCCAGCMGCCGCGGTAA --p-front-r CCGTCAATTCMTTTRAGTTT --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
 qiime demux summarize --i-data trim-demux.qza --o-visualization trim-demux.qzv
 qiime tools export  --input-path trim-demux.qzv --output-path result/1_trim-seq-qc
 
 ##### Dada2
 # set the parameters by qc-result
-qiime dada2 denoise-paired --i-demultiplexed-seqs trim-demux.qza --p-trunc-len-f 219 --p-trunc-len-r 205 --p-n-threads 4 --o-table dada2-table.qza --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
+qiime dada2 denoise-paired --i-demultiplexed-seqs trim-demux.qza --p-trunc-len-f 220 --p-trunc-len-r 195 --p-n-threads 32 --o-table dada2-table.qza --p-min-fold-parent-over-abundance 8 --o-representative-sequences dada2-rep-seqs.qza --o-denoising-stats dada2-denoising-stats.qza
 
 for i in `ls dada2*.qza`; do
     qiime tools export --input-path ${i} --output-path result/2-dada2-1

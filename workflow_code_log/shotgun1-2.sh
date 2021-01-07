@@ -14,7 +14,7 @@ cd 01_cleandata
 ################### trimmomatic
 ln -s ../00_rawdata/*fq ./
 ## prepare adapters at first
-parallel -j 20 --xapply 'trimmomatic PE -phred33 -threads 4 {1} {2} \
+parallel -j 10 --xapply 'trimmomatic PE -phred33 -threads 16 {1} {2} \
       trimmed.{1.}.fastq outtrimmed.{1.}.fastq trimmed.{2.}.fastq outtrimmed.{2.}.fastq  \
       ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 \
       SLIDINGWINDOW:5:20 LEADING:5 TRAILING:5 \
@@ -24,7 +24,7 @@ rm outtrimmed.*
 ################################
 
 ##############  rm host
-parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fastq ::: trimmed.*_R2.fastq
+parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fq.fastq ::: trimmed.*_R2.fq.fastq
 parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
 # bump: both unmapped pair
 parallel -j 10 --xapply -k 'samtools view -b -@ 8 -f 12 -F 256 {1} > bump.{1}' ::: *.bam
@@ -46,25 +46,22 @@ ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel
 mkdir -p 02_megahit
 cd 02_megahit
 ln -s ../01_clean_data_2/sorted.*fastq ./
-parallel -j 4 'megahit -1 {1} -2 {2} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 20 --min-contig-len 200 --out-prefix {/.} -o {/.}' ::: sorted.*R1.fastq ::: sorted.*R2.fastq
-
-parallel -j 4 'megahit --12 {1} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.2 -t 20 --min-contig-len 200 --out-prefix {/.} -o {/.}' ::: interleaved.*.fastq
 
 ############ inter files rm
 rm */inter*
 
 ############## interleaved fastq and adjust name
-parallel -j 20 --xapply 'reformat.sh verifypaired=t in1={1} in2={2} out=interleaved.{1}' ::: sorted.*_R1.fastq ::: sorted.*_R2.fastq
-for filename in interleaved.*.fastq
+parallel -j 20 --xapply 'reformat.sh -eoom -Xmx100g verifypaired=t in1={1} in2={2} out=interleaved.{1}' ::: *_R1.fastq ::: *_R2.fastq
+for i in interleaved.*
 do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
-  base=${base//_R1/}
-  mv ${filename} ${base}
+  mv ${i} ${i/\_R1/}
 done
 
+for i in P*.fq; do echo ${i/\-[A-Z]*[^\.fq]/}; done
 ############## megahit
 mkdir -p 02_megahit
 cd 02_megahit
-find . -name "*fastq" | parallel -j 8 megahit --12 {} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.1 -t 10 --min-contig-len 200 --out-prefix {/.} -o {/.}
+parallel -j 1 'megahit --12 {1} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.5 -t 20 --min-contig-len 200 --out-prefix {.} -o {.}' ::: *.fastq
 ############ inter files rm
 rm */inter*
 
