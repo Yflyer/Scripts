@@ -57,12 +57,9 @@ rm *bowtie2*
 ####
 kneaddata_read_count_table --input rm_host --output kneaddata_sum.txt
 
-<<<<<<< HEAD
 # interleaved-fastq
 # this process is not memory- or cpu-consuming, rum more parallel jobs as you can
 parallel --xapply 'reformat.sh verifypaired=t  in1={1} in2={2} out=interleaved.{1}' ::: trimmed.*_1.fastq ::: trimmed.*_2.fastq
-=======
->>>>>>> b4476d919fb007c3cb200706a1d6a79863242f60
 
 ### need to adjust name
 for filename in interleaved.*
@@ -74,13 +71,11 @@ done
 
 parallel -j 2 --xapply 'trim-low-abund.py -V -Z 10 -C 3 -M 180G --quiet --summary-info tsv -o kmer.cut.{1} {1}' ::: interleaved.*
 
-<<<<<<< HEAD
 =======
 parallel -j 10 --pipe --xapply 'trim-low-abund.py -V -Z 10 -C 3 -o - -M 32G --quiet --summary-info tsv {1} | extract-paired-reads.py -p pe.{1} -s se.{1}' ::: interleaved.*
 parallel -j 10 --xapply 'trim-low-abund.py -V -Z 10 -C 3 -o ktrim.{1} -M 32G --quiet --summary-info tsv {1}' ::: interleaved.*
 parallel -j 10 'extract-paired-reads.py -p pe.{} -s se.{}' ::: *fastq
 
->>>>>>> b4476d919fb007c3cb200706a1d6a79863242f60
 
 parallel -j 10 'load-into-counting.py -T 8 -k 31 -q --summary-info -M 32G table.{1} {1}' ::: interleaved.*
 filter-abund.py -T 8 -V -Z 10 -C -f 3 table.ct test.interleaved.fq

@@ -31,7 +31,7 @@ rm outtrimmed.*
 ################################
 
 ##############  rm host
-parallel -j 10 --xapply 'bowtie2 -p 8 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fasq ::: trimmed.*_R2.fasq
+parallel -j 10 --xapply 'bowtie2 -p 4 -x $DTB/Human_bowtie2/hg37dec_v0.1 --very-sensitive --dovetail -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*_R1.fasq ::: trimmed.*_R2.fasq
 parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
 # bump: both unmapped pair
 parallel -j 10 --xapply -k 'samtools view -b -@ 8 -f 12 -F 256 {1} > bump.{1}' ::: *.bam
