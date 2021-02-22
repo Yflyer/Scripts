@@ -77,3 +77,91 @@ qiime tools export --input-path aligned-rep-seqs.qza --output-path result/4_tree
 
 qiime feature-classifier classify-sklearn --i-classifier  $DTB/silva_18s_classifier/trim_99_18S_silva_classifier.qza --i-reads dada2-rep-seqs.qza  --o-classification silva.taxonomy.qza
 qiime tools export  --input-path silva.taxonomy.qza --output-path result/3_classification
+
+### VSEARCH
+# joined paired
+# _R1 need
+ln -s ../../02_ptrim/r1/ptrim_X* .
+for i in *.fastq;
+do
+sample=$(basename ${i} .fastq);
+mv $i ${sample#*_}_R1.fq;
+done
+
+ln -s ../../02_ptrim/r2/ptrim_X* .
+for i in *.fastq;
+do
+sample=$(basename ${i} .fastq);
+mv $i ${sample#*_}_R2.fq;
+done
+
+for i in *.fq;
+do
+mv $i ${i/_/P};
+done
+
+# .fq merge
+usearch -threads 80 -fastq_mergepairs *R1*.fq -relabel @ -fastq_maxdiffs 10 \
+  -fastq_pctid 80 -fastqout merged.fq
+
+#length trim
+cd ..
+usearch -fastx_truncate rawdata/merged.fq -trunclen 250 -fastqout reads250.fq
+# qc
+usearch -threads 80 -fastq_filter reads250.fq -fastq_maxee 1.0 -fastaout filtered.fa
+
+# Find unique read sequences and abundances
+usearch -threads 80 -fastx_uniques filtered.fa -sizeout -relabel Uniq -fastaout uniques.fa
+
+# Make 97% OTUs and filter chimeras
+usearch -threads 80 -cluster_otus uniques.fa -otus otus.fa -relabel Otu -threads 80
+
+# map otu reads to seq to get otu counts table
+usearch -threads 80 -otutab filtered.fa -otus otus.fa -otutabout otutab.txt -mapout map.txt
+
+# annotate
+qiime tools import --type 'FeatureData[Sequence]' --input-path otus.fa --output-path otus.qza
+qiime feature-classifier classify-sklearn --p-n-jobs 80 --i-classifier $DTB/silva_18s_classifier/trim_99_18S_silva_classifier.qza --i-reads otus.qza  --o-classification taxonomy.qza
+qiime tools export  --input-path taxonomy.qza --output-path otu_annotat_result/
+
+# Denoise: predict biological sequences and filter chimeras
+usearch -threads 80 -unoise3 uniques.fa -zotus zotus.fa -threads 80
+usearch -threads 80 -otutab filtered.fa -zotus zotus.fa -otutabout zotutab.txt -mapout zmap.txt
+
+
+INPUT='someletters_12345_moreleters.ext'
+SUBSTRING=$(echo $INPUT| cut -d'_' -f 2)
+
+tmp=${a#*_}   # remove prefix ending in "_"
+b=${tmp%_*}   # remove suffix starting with "_"
+
+
+
+# CHIMERA CHECKING
+qiime vsearch uchime-denovo \
+  --i-table atacama-table.qza \
+  --i-sequences atacama-rep-seqs.qza \
+  --output-dir uchime-dn-out
+qiime feature-table filter-features \
+  --i-table atacama-table.qza \
+  --m-metadata-file uchime-dn-out/nonchimeras.qza \
+  --o-filtered-table uchime-dn-out/table-nonchimeric-wo-borderline.qza
+qiime feature-table filter-seqs \
+  --i-data atacama-rep-seqs.qza \
+  --m-metadata-file uchime-dn-out/nonchimeras.qza \
+  --o-filtered-data uchime-dn-out/rep-seqs-nonchimeric-wo-borderline.qza
+qiime feature-table summarize \
+  --i-table uchime-dn-out/table-nonchimeric-wo-borderline.qza \
+  --o-visualization uchime-dn-out/table-nonchimeric-wo-borderline.qzv
+
+qiime vsearch dereplicate-sequences \
+  --i-sequences demux.qza \
+  --o-dereplicated-table OTU-table.qza \
+  --o-dereplicated-sequences OTU-rep-seqs.qza
+
+qiime vsearch cluster-features-de-novo \
+  --i-table OTU-table.qza \
+  --i-sequences OTU-rep-seqs.qza \
+  --p-perc-identity 0.97 \
+  --o-clustered-table OTU-table-97.qza \
+  --o-clustered-sequences OTU-rep-seqs-97.qza
