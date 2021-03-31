@@ -117,6 +117,7 @@ cd 03_prokka
 ################### rename r1 ######################
 ln -s ../02_megahit/*/*.fa ./
 ln -s ../02_megahit/sample_list.txt .
+
 parallel -j 5 'prokka --metagenome --outdir {} --prefix {} --mincontiglen 500 {}.contigs.fa' :::: sample_list.txt
 ##################################################################
 
@@ -124,9 +125,21 @@ parallel -j 5 'prokka --metagenome --outdir {} --prefix {} --mincontiglen 500 {}
 ##################################################################
 mkdir -p 04_mapping
 cd 04_mapping
+############################ link file ###########################
+ln -s ../02_megahit/sample_list.txt .
+ln -s ../01_cleandata/trimmed*R1.fq.gz ./
+ln -s ../01_cleandata/trimmed*R2.fq.gz ./
+ln -s ../03_prokka/*/*.ffn .
+################### mapping ########################
+parallel -j 10 'mkdir {}' :::: sample_list.txt
+parallel -j 10 'bowtie2-build --threads 4 {}.ffn {}/{}' :::: sample_list.txt
+parallel -j 5 'bowtie2 -p 8 -x {}/{} -1 trimmed.{}_R1.fq.gz -2 trimmed.{}_R2.fq.gz -S {}.map.sam' :::: sample_list.txt
+#parallel -j 10 'samtools faidx {}.ffn' :::: sample_list.txt
+#parallel -j 5 -k 'samtools view --threads 8 -bt {}.ffn.fai {}.map.sam > {}.map.bam' :::: sample_list.txt
+parallel -j 5 'samtools sort --threads 8 -o {}.map.sorted.bam -O bam {}.map.sam' :::: sample_list.txt
 
-parallel -j 5 'bowtie2-build {}.contigs.fa {}.contigs.fa' :::: sample_list.txt
-parallel -j 5 'bowtie2 -p 8 -x contigs.fa -1 pair1.fastq -2 pair2.fastq -S {}.map.sam' :::: sample_list.txt
+
+parallel -j 5 'samtools index --threads 8 {}.map.sorted.bam' :::: sample_list.txt
 ############ samtools ##############
 parallel -j 5 'samtools faidx contigs.fa
 # SAM file is converted to BAM format (view), sorted by left most alignment coordinate (sort) and indexed (index) for fast random access
