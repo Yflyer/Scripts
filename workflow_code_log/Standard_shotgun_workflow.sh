@@ -40,7 +40,7 @@ parallel -j 10 --xapply 'trimmomatic PE -phred33 -threads 4 {1} {2} \
 ############### rm temp file and exit
 rm outtrimmed.*
 cd ..
-################################
+##################################################################
 
 ##################################################################
 ################### rm host ######################
@@ -58,7 +58,7 @@ rm *bam
 rm *sam
 ################################
 cd ..
-
+##################################################################
 
 
 ##################################################################
@@ -83,11 +83,18 @@ done
 ### prepare sample name list
 ls -d *_R1.fq.gz | cut -d '_' -f1 > sample_list.txt
 parallel -j 3 --xapply 'megahit -1 {1}_R1.fq.gz -2 {1}_R2.fq.gz --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.5 -t 16 --min-contig-len 500 --out-prefix {1} -o {1}' :::: sample_list.txt
-#parallel -j 1 'megahit --12 {1} --min-count 2 --k-list 29,39,51,67,85,107,133 -m 0.5 -t 20 --min-contig-len 500 --out-prefix {.} -o {.}' ::: *.fastq
+##################################################################
+### add sample prefix to contigs.fa
+while read prefix
+do
+  sed -i "s/>/>$prefix\_/1" ${prefix}/${prefix}.contigs.fa
+done < sample_list.txt
+###################################################################
 ############ inter files rm
 rm -rf */inter*
+##################################################################
 
-##########################################
+######################################################################
 ################### ORF predict and annotation ######################
 ##################################################################
 ############## prokka
@@ -110,8 +117,31 @@ cd 03_prokka
 ################### rename r1 ######################
 ln -s ../02_megahit/*/*.fa ./
 ln -s ../02_megahit/sample_list.txt .
-parallel -j 5 'prokka --addgenes --metagenome --outdir {} --prefix {} --mincontiglen 500 {}.contigs.fa' :::: sample_list.txt
+parallel -j 5 'prokka --metagenome --outdir {} --prefix {} --mincontiglen 500 {}.contigs.fa' :::: sample_list.txt
+##################################################################
 
+############################ ORF mapping #########################
+##################################################################
+mkdir -p 04_mapping
+cd 04_mapping
+
+parallel -j 5 'bowtie2-build {}.contigs.fa {}.contigs.fa' :::: sample_list.txt
+parallel -j 5 'bowtie2 -p 8 -x contigs.fa -1 pair1.fastq -2 pair2.fastq -S {}.map.sam' :::: sample_list.txt
+############ samtools ##############
+parallel -j 5 'samtools faidx contigs.fa
+# SAM file is converted to BAM format (view), sorted by left most alignment coordinate (sort) and indexed (index) for fast random access
+samtools view -bt contigs.fa.fai $SAMPLE.map.sam > $SAMPLE.map.bam
+samtools sort $SAMPLE.map.bam $SAMPLE.map.sorted
+samtools index $SAMPLE.map.sorted.bam
+
+parallel -j 25 --xapply 'bowtie2 -p 4 -x ../sars-cov-2/sars-cov-2 --very-sensitive-local --dovetail --mp 2,2 -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*1.fq ::: trimmed.*2.fq
+parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
+# bump: both unmapped pair
+parallel -j 40 --xapply -k 'samtools view -b -@ 3 -F 4 {1} > mp.{1}' ::: *.bam
+parallel -j 40 --xapply -k 'samtools sort -n -m 6G -@ 3 {1} -o sorted.{1}' ::: mp.*.bam
+parallel -j 40 --xapply -k 'samtools fastq -@ 3 {1} \
+    -1 {1.}_R1.fastq \
+    -2 {1.}_R2.fastq -n ' ::: sorted.*.bam
 ############## interleaved fastq and adjust name
 ### merge cleandata
 #ls ../01_cleandata/interleaved.trimmed.*-H0.R1.fastq | cut -d '-' -f1 | parallel -j 6 -k 'cat {}* > {/}.fastq'
@@ -123,6 +153,8 @@ parallel -j 5 'prokka --addgenes --metagenome --outdir {} --prefix {} --minconti
 #done
 
 #for i in P*.fq; do echo ${i/\-[A-Z]*[^\.fq]/}; done
+
+
 
 
 ############# Usearch Workflow
