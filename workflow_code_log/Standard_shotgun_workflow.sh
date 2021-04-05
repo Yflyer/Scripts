@@ -137,15 +137,19 @@ parallel -j 5 'bowtie2 -p 8 -x {}/{} -1 trimmed.{}_R1.fq.gz -2 trimmed.{}_R2.fq.
 #parallel -j 10 'samtools faidx {}.ffn' :::: sample_list.txt
 #parallel -j 5 -k 'samtools view --threads 8 -bt {}.ffn.fai {}.map.sam > {}.map.bam' :::: sample_list.txt
 parallel -j 5 'samtools sort --threads 8 -o {}.map.sorted.bam -O bam {}.map.sam' :::: sample_list.txt
-
-
 parallel -j 5 'samtools index --threads 8 {}.map.sorted.bam' :::: sample_list.txt
+
+samtools view example.bam | cut -f 3 | sort | uniq -c
+
+parallel -j 5 'samtools index {}.map.sorted.bam' :::: sample_list.txt
 ############ samtools ##############
 parallel -j 5 'samtools faidx contigs.fa
 # SAM file is converted to BAM format (view), sorted by left most alignment coordinate (sort) and indexed (index) for fast random access
 samtools view -bt contigs.fa.fai $SAMPLE.map.sam > $SAMPLE.map.bam
 samtools sort $SAMPLE.map.bam $SAMPLE.map.sorted
 samtools index $SAMPLE.map.sorted.bam
+
+samtools view -F260 <yourbam>
 
 parallel -j 25 --xapply 'bowtie2 -p 4 -x ../sars-cov-2/sars-cov-2 --very-sensitive-local --dovetail --mp 2,2 -1 {1} -2 {2} -S {1.}.sam' ::: trimmed.*1.fq ::: trimmed.*2.fq
 parallel -j 10 --xapply -k 'samtools view -@ 8 -bS {1} > {1.}.bam' ::: *.sam
