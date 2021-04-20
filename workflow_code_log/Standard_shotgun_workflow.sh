@@ -20,13 +20,13 @@ cd 01_cleandata
 ln -s $RAWPATH/r1/*gz ./
 for i in *fastq.gz
 do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
-  newname=${i/SRR197/L}
+  newname=${i//}
   mv ${i} ${newname/\.fastq\.gz/\_R1\.fq\.gz}
 done
 ln -s $RAWPATH/r2/*gz ./
 for i in *fastq.gz
 do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
-  newname=${i/SRR197/L}
+  newname=${i//}
   mv ${i} ${newname/\.fastq\.gz/\_R2\.fq\.gz}
 done
 
@@ -98,7 +98,6 @@ rm -rf */inter*
 ################### ORF predict and annotation ######################
 ##################################################################
 ############## prokka
-##
 #.gff	This is the master annotation in GFF3 format, containing both sequences and annotations. It can be viewed directly in Artemis or IGV.
 #.gbk	This is a standard Genbank file derived from the master .gff. If the input to prokka was a multi-FASTA, then this will be a multi-Genbank, with one record for each sequence.
 #.fna	Nucleotide FASTA file of the input contig sequences.
@@ -130,16 +129,26 @@ ln -s ../02_megahit/sample_list.txt .
 ln -s ../01_cleandata/trimmed*R1.fq.gz ./
 ln -s ../01_cleandata/trimmed*R2.fq.gz ./
 ln -s ../03_prokka/*/*.ffn .
+### add sample prefix to ffn
+while read prefix
+do
+  sed -i "s/>/>$prefix\_/1" ${prefix}.ffn
+done < sample_list.txt
+###################################################################
 ################### mapping ########################
 parallel -j 10 'mkdir {}' :::: sample_list.txt
 parallel -j 10 'bowtie2-build --threads 4 {}.ffn {}/{}' :::: sample_list.txt
 parallel -j 5 'bowtie2 -p 8 -x {}/{} -1 trimmed.{}_R1.fq.gz -2 trimmed.{}_R2.fq.gz -S {}.map.sam' :::: sample_list.txt
 #parallel -j 10 'samtools faidx {}.ffn' :::: sample_list.txt
 #parallel -j 5 -k 'samtools view --threads 8 -bt {}.ffn.fai {}.map.sam > {}.map.bam' :::: sample_list.txt
-parallel -j 5 'samtools sort --threads 8 -o {}.map.sorted.bam -O bam {}.map.sam' :::: sample_list.txt
-parallel -j 5 'samtools index --threads 8 {}.map.sorted.bam' :::: sample_list.txt
+parallel -j 5 'samtools sort --threads 8 -o {}.sorted.bam -O bam {}.map.sam' :::: sample_list.txt
+parallel -j 5 'samtools index {}.sorted.bam' :::: sample_list.txt
+parallel -j 20 -k 'genomeCoverageBed -ibam {}.sorted.bam > {}.hist.tsv' :::: sample_list.txt
 
 samtools view example.bam | cut -f 3 | sort | uniq -c
+
+
+###################
 
 parallel -j 5 'samtools index {}.map.sorted.bam' :::: sample_list.txt
 ############ samtools ##############
