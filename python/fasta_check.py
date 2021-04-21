@@ -8,9 +8,9 @@ import argparse
 #import fileinput
 
 def get_parser():
-    parser = argparse.ArgumentParser(description="Demo of argparse")
-    parser.add_argument('--input',required=True,help='input')
-    parser.add_argument('--output',required=True,help='output')
+    parser = argparse.ArgumentParser(description="Check the format of fasta files and correct the format error")
+    parser.add_argument('--input',required=True,help='input directory of fasta')
+    parser.add_argument('--output',required=True,help='output directory of checked fasta')
 
     return parser
 
@@ -30,7 +30,7 @@ if not os.path.exists(output):
     os.mkdir(output)
     print('*** The output result will be in "{}" ***'.format(output))
 else:
-    print('*** The output result will be in "{} ***"'.format(output))
+    print('*** The output result will be in "{} ***'.format(output))
 
 for (raw,check) in zip(input_list,output_list):
    raw_f = open (raw,'r')
