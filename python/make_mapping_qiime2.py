@@ -14,6 +14,7 @@ file2=sys.argv[2]
 f1paths = os.listdir(file1)
 f2paths = os.listdir(file2)
 
+### check completiness
 if f1paths == f2paths:
     print('checked!')
 

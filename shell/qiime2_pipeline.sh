@@ -2,29 +2,32 @@
 # Please run in activated conda QIIME2 environment
 # Yufei, 5/15/2020, zengyf@qq.com
 
-conda install -c bioconda sabre
-###
 ############## demultiplexing #################
-awk -v OFS="\t" '{print $2, $1"_R1.fq", $1"_R2.fq"} ' barcode_mapping.txt > sabre_barcode_mapping.txt
-Split_libraries_fastq.pl --f1 Hawaii_ITS_S0_L001_R1_001.fastq --f2 Hawaii_ITS_S0_L001_R2_001.fastq --map sample.tab --index Hawaii_ITS_S0_L001_I1_001.fastq --o1 Hawaii_ITS_R1.fq --o2 Hawaii_ITS_R2.fq
+### NOTE: if you used data from IEG, used extra perl script to demultiplexing when you have rawdata include: R1.fastq, R2.fastq, index.fastq, barcode_list.txt.
+### replace by your exact file name in following command
+Split_libraries_fastq.pl --f1 R1.fastq --f2 R2.fastq --map barcode_list.txt --index index.fastq --o1 demux_R1.fq --o2 demux_R2.fq
 
-############## optional: sometimes you need to do following to neaten your data #################
-# adjust the name of sample
-rename.py R2 _split_2. .
-rename.py R1 _split_1. .
+############## optional #################
+### sometimes sample name are long and complex, hardly understood. use RE pattern '[previous name]/[target part of string]/[change to this part]' like following
+for i in *fastq.gz
+do #Use the program basename to remove _R1.Trimmed.fq.gz to generate the base
+  mv ${i} ${i/[target part of string]/[change to this part]}
+done
 
+############### create mapping file for python ##################
+### NOTE: move the r1.fastq r2.fastq to file directory "r1" "r2"
+### NOTE please make sure that your fastq file in r1 and r2 are look like [samplename]_R1.fastq and [samplename]_R2.fastq
 # mapping seq files
-make_mapping_2.py r1 r2
+make_mapping_qiime2.py r1 r2
 
 # optional: check
+# NOTE: if you used check script, should re-generate mapping file.
 pair_check.py --input mapping.tsv
 fastq_check.py --input r1 --output check_r1
 fastq_check.py --input r2 --output check_r2
 
+###############################################################################
 ############## qiime2 workflow ###############################################
-# new mapping of checked files
-make_mapping_qiime2.py check_r1 check_r2
-##### import the data;
 # In this step, we use plugin: demux, https://docs.qiime2.org/2020.2/plugins/available/demux/
 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-path mapping.tsv --output-path demux.qza --input-format PairedEndFastqManifestPhred33V2
 qiime demux summarize --i-data demux.qza --o-visualization demux.qzv

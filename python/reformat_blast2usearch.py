@@ -32,18 +32,23 @@ seq=None
 keep_this_seq=True
 for line in fasta:
     if line[0] == '>':
-        if seq is not None and keep_this_seq:
-            output_f.write(seq+'\n')
+        '''
+        #if seq is not None and keep_this_seq:
+        #    output_f.write(seq+'\n')
         ###else:
             ###print('discard')
+        '''
         # label reformat
         label = line.strip()
         tag= label.split(' ')[0]
-        tax = label.strip(tag).strip().split(';') # there is a bug:if you use strip(tag+' '), a extra letter of tax will be deleted, so I have to strip twice
+        # there is a bug:if you use strip(tag+' '), a extra letter of tax will be deleted, so I have to strip twice
+        # need to remove comma in line for usearch prase
+        tax = label.strip(tag).strip().replace(',', '-').split(';')
         # Euk will be wrong in Usearch level, so it need to be excluded in downstream analysis
         try:
             if 'Eukaryota' in tax[0]:
                 tax[0]='(Should be excluded)'+tax[0]
+
             if len(tax) >= 7:
                 tax=';tax=d:'+tax[0]+',p:'+tax[1]+',c:'+tax[2]+',o:'+tax[3]+',f:'+tax[4]+',g:'+tax[5]+',s:'+tax[6]
             elif len(tax) == 6:
@@ -53,7 +58,7 @@ for line in fasta:
             elif len(tax) <= 4:
                 tax=';tax=d:'+tax[0]+',p:'+tax[1]+',c:'+tax[2]+',o:'+tax[3]
 
-            label=tag+tax+'\n'
+            label=tag+tax+';\n'
             output_f.write(label)
             keep_this_seq=True
 
@@ -64,18 +69,21 @@ for line in fasta:
             print('Wrong index of taxanonmy info:',tax)
             #print(num)
 
-        seq = next(fasta).strip()
+        '''
+        #seq = next(fasta).strip()
         #print(label)
-        num = num+1
+        #num = num+1
         #print(num)
+        '''
 
     else:
         # seq refomrat from multi line to one line
-        seq = seq+line.strip()
-        #print(seq)
+        #seq = seq+line.strip()
+        if keep_this_seq:
+            output_f.write(line)
         num = num+1
         #print(num)
 
-output_f.write(seq+'\n')
+#output_f.write(seq+'\n')
 print('------------fasta seqs are reformatted----------------')
 output_f.close()
