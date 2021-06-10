@@ -145,6 +145,13 @@ parallel -j 5 'samtools sort --threads 8 -o {}.sorted.bam -O bam {}.map.sam' :::
 parallel -j 5 'samtools index {}.sorted.bam' :::: sample_list.txt
 parallel -j 20 -k 'genomeCoverageBed -ibam {}.sorted.bam > {}.hist.tsv' :::: sample_list.txt
 
+############### ORF clustering ##################
+touch merge.orf.fasta
+for i in *.ffn
+do #Use seq kit to filter out ORF > 1000base
+  seqkit seq -m 1000 -M 5000 -g ${i} >> merge.orf.fasta
+done
+
 samtools view example.bam | cut -f 3 | sort | uniq -c
 
 
