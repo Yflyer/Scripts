@@ -152,6 +152,13 @@ do #Use seq kit to filter out ORF > 1000base
   seqkit seq -m 1000 -M 5000 -g ${i} >> merge.orf.fasta
 done
 
+for i in *.ffn
+do #Use seq kit to filter out ORF > 1000base
+  seqkit seq -m 1000 -M 5000 -g ${i} > ../05_ORF/${i/ffn/}fasta
+done
+
+cd-hit -i merge.orf.fasta -o merge.orf.nr.fasta -c 0.95 -M 320000 -T 12 -n 5 -d 0 -aS 0.9 -g 1 -sc 1 -sf 1
+
 samtools view example.bam | cut -f 3 | sort | uniq -c
 
 
