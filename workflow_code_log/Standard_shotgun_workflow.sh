@@ -159,6 +159,27 @@ done
 
 cd-hit -i merge.orf.fasta -o merge.orf.nr.fasta -c 0.95 -M 320000 -T 12 -n 5 -d 0 -aS 0.9 -g 1 -sc 1 -sf 1
 
+############### phage predict ###############
+parallel -j 15 -k 'virsorter run -w {} -i {}.fasta -j 4 --prep-for-dramv --provirus-off --min-score 0.7 all' :::: sample_list.txt
+
+touch gene_counts.tsv
+while read prefix
+do #Use seq kit to filter out ORF > 1000base
+  grep '>' ${prefix}.fasta | wc -l >> gene_counts.tsv
+done < sample_list.txt
+
+touch gc_counts.tsv
+while read prefix
+do #Use seq kit to filter out ORF > 1000base
+  stats.sh ${prefix}.fasta | sed -n '2p' | cut -f 8 >> gc_counts.tsv
+done < sample_list.txt
+
+touch viral_seq_counts.tsv
+while read prefix
+do #Use seq kit to filter out ORF > 1000base
+  wc -l result/${prefix}.tsv | cut -f 1 >> viral_seq_counts.tsv
+done < sample_list.txt
+
 samtools view example.bam | cut -f 3 | sort | uniq -c
 
 

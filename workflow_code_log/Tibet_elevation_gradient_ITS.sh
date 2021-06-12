@@ -4,7 +4,7 @@ qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' --input-pa
 qiime demux summarize --i-data demux.qza --o-visualization demux.qzv
 qiime tools export  --input-path demux.qzv --output-path result/0_seq-qc
 
-qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f GTGARTCATCGARTCTTTG --p-front-r TCCTCCGCTTATTGATATGC --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
+qiime cutadapt trim-paired --i-demultiplexed-sequences demux.qza --p-front-f CTTGGTCATTTAGAGGAAGTAA --p-front-r GCTGCGTTCTTCATCGATGC --p-minimum-length 200 --o-trimmed-sequences trim-demux.qza --p-discard-untrimmed true
 qiime demux summarize --i-data trim-demux.qza --o-visualization trim-demux.qzv
 qiime tools export  --input-path trim-demux.qzv --output-path result/1_trim-seq-qc
 
