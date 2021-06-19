@@ -1,3 +1,8 @@
+# This is a pipeline of USEARCH command for generating OTU and zOTU.
+# Please run in activated conda QIIME2 environment
+# Yufei, 5/03/2021, yfzeng0827@hotmail.com
+# github.com/Yflyer
+
 ############################### start your project ###############################
 # In project dir
 mkdir usearch
@@ -24,7 +29,7 @@ GTGCCAGCMGCCGCGGTAA
 CCGTCAATTCMTTTRAGTTT
 eof
 usearch -search_oligodb one_pct_test.fq -db primers.fa -strand both \
-  -userout primer_hits.txt -userfields query+qlo+qhi+qstrand -threads 15
+  -userout primer_hits.txt -userfields query+qlo+qhi+qstrand -threads 40
 # ITS
 cat > primers.fa <<eof
 >forward
@@ -33,23 +38,23 @@ CTTGGTCATTTAGAGGAAGTAA
 GCTGCGTTCTTCATCGATGC
 eof
 usearch -search_oligodb one_pct_test.fq -db primers.fa -strand both \
-  -userout primer_hits.txt -userfields query+qlo+qhi+qstrand -threads 15
+  -userout primer_hits.txt -userfields query+qlo+qhi+qstrand -threads 40
 
 # turncate according the above result
 usearch -fastx_truncate raw.fq -stripleft 20 -stripright 21 -fastqout stripped.fq 
 
 # Quality filter
 usearch -fastq_filter stripped.fq -fastq_maxee 1.0 \
-  -fastaout filtered.fa -relabel Filt -threads 15
+  -fastaout filtered.fa -relabel Filt -threads 40
 
 # Find unique read sequences and abundances
-usearch -fastx_uniques filtered.fa -sizeout -relabel Uniq -fastaout uniques.fa -threads 15
+usearch -fastx_uniques filtered.fa -sizeout -relabel Uniq -minuniquesize 2 -fastaout uniques.fa -threads 40
 
 # Run UPARSE algorithm to make 97% OTUs
-usearch -cluster_otus uniques.fa -otus otus.fa -relabel Otu -threads 15
+usearch -cluster_otus uniques.fa -otus otus.fa -relabel Otu -threads 40
 
 # Run UNOISE algorithm to get denoised sequences (ZOTUs)
-#usearch -unoise3 uniques.fa -zotus zotus.fa -threads 15
+#usearch -unoise3 uniques.fa -zotus zotus.fa -threads 40
 
 # Downstream analysis of OTU sequences & OTU table
 # Can do this for both OTUs and ZOTUs, here do
@@ -57,15 +62,15 @@ usearch -cluster_otus uniques.fa -otus otus.fa -relabel Otu -threads 15
 ##################################################
 
 # Make OTU table
-usearch -otutab raw.fq -otus otus.fa -otutabout otutab_raw.txt -threads 15
+usearch -otutab raw.fq -otus otus.fa -otutabout otutab_raw.txt -threads 40
 
 # Make OTU tree
-usearch -calc_distmx otus.fa -tabbedout distmx.txt -threads 15
-usearch -cluster_aggd distmx.txt -treeout otus.tree -threads 15
+usearch -calc_distmx otus.fa -tabbedout distmx.txt -threads 40
+usearch -cluster_aggd distmx.txt -treeout otus.tree -threads 40
 
 # Predict taxonomy
 usearch -sintax otus.fa -db /vd03/home/MetaDatabase/Silva_132_release/SILVA_132_USEARCH/SILVA_132_16s_SSURef_Nr99_Usearch.fasta -strand both \
-  -tabbedout sintax.txt -sintax_cutoff 0.8 -threads 15
+  -tabbedout sintax.txt -sintax_cutoff 0.8 -threads 40
 
 # Taxonomy summary reports
 usearch -sintax_summary sintax.txt -otutabin otutab.txt -rank g -output genus_summary.txt
