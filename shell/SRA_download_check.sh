@@ -1,6 +1,7 @@
 #!/bin/bash
 # Yufei Zeng
 # 2021/06/28
+# yfzeng0827@hotmail.com
 
 ### two kind of errors in SRA download:
 ### 1. net conection failed
